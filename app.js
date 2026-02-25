@@ -1,6 +1,3 @@
-<meta name="supabase-url" content="https://bupgsvxggtftbmjholpp.supabase.co" />
-<meta name="supabase-anon-key" content="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJ1cGdzdnhnZ3RmdGJtamhvbHBwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE5NDM1NDQsImV4cCI6MjA4NzUxOTU0NH0.LmlIE4EJqKFG-WFE8urkX2jR6NKealyvnCOjWG7Qo08" />
-
 const STORAGE_KEY = "msp_data_override";
 const EMAIL_KEY = "msp_email";
 const ADMIN_SESSION_KEY = "msp_admin";
