@@ -3,7 +3,6 @@ const EMAIL_KEY = "msp_email";
 const ADMIN_SESSION_KEY = "msp_admin";
 const RESULTS_UNLOCK_KEY = "msp_results_unlocked";
 const ADMIN_PASSWORD = "shl2026"; // change for production
-const PROFILE_REQUIRED_FIELDS = ["first_name", "last_name", "birth_year", "postal_code"];
 
 const defaultData = {
   sponsor: {
@@ -95,9 +94,7 @@ const state = {
   data: loadData(),
   selections: { shl: null, sdhl: null },
   auth: {
-    client: null,
-    user: null,
-    profile: null
+    client: null
   },
   activeMonthId: toMonthId(new Date()),
   remoteVotingClosed: false
@@ -108,9 +105,17 @@ normalizePlayerDefaults();
 function loadData() {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
-    if (raw) return JSON.parse(raw);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (parsed && Array.isArray(parsed.leagues) && parsed.leagues.length > 0) {
+        return parsed;
+      }
+      console.warn("Invalid data override, resetting to defaults");
+      localStorage.removeItem(STORAGE_KEY);
+    }
   } catch (err) {
     console.warn("Failed to load data override", err);
+    localStorage.removeItem(STORAGE_KEY);
   }
   return structuredClone(defaultData);
 }
@@ -121,6 +126,22 @@ function saveData() {
 
 function normalizePlayerDefaults() {
   let changed = false;
+  if (!state.data || typeof state.data !== "object") {
+    state.data = structuredClone(defaultData);
+    changed = true;
+  }
+  if (!Array.isArray(state.data.leagues) || state.data.leagues.length === 0) {
+    state.data.leagues = structuredClone(defaultData.leagues);
+    changed = true;
+  }
+  if (!state.data.sponsor) {
+    state.data.sponsor = structuredClone(defaultData.sponsor);
+    changed = true;
+  }
+  if (!state.data.bannerUrl) {
+    state.data.bannerUrl = defaultData.bannerUrl;
+    changed = true;
+  }
   if (!state.data.settings) {
     state.data.settings = { votingClosed: false };
     changed = true;
@@ -130,6 +151,10 @@ function normalizePlayerDefaults() {
     changed = true;
   }
   state.data.leagues.forEach((league) => {
+    if (!Array.isArray(league.players)) {
+      league.players = [];
+      changed = true;
+    }
     league.players.forEach((player) => {
       if (typeof player.active === "undefined") {
         player.active = true;
@@ -218,12 +243,14 @@ function getSupabaseConfig() {
   return { url, anonKey };
 }
 
-function isProfileComplete(profile) {
-  if (!profile) return false;
-  return PROFILE_REQUIRED_FIELDS.every((field) => {
-    const value = profile[field];
-    return value !== null && value !== undefined && String(value).trim() !== "";
-  });
+
+function formatSupabaseError(error, fallback = "okänt fel") {
+  if (!error) return fallback;
+  const message = String(error.message || "").trim();
+  const details = String(error.details || "").trim();
+  const hint = String(error.hint || "").trim();
+  const code = String(error.code || "").trim();
+  return [message, details, hint, code && `(kod: ${code})`].filter(Boolean).join(" | ") || fallback;
 }
 
 function isVotingClosed() {
@@ -231,7 +258,7 @@ function isVotingClosed() {
 }
 
 function canVoteNow() {
-  return Boolean(state.auth.user && isProfileComplete(state.auth.profile) && !isVotingClosed());
+  return !isVotingClosed();
 }
 
 function resetData() {
@@ -263,6 +290,9 @@ function renderSponsor() {
 function renderCards() {
   const order = ["G", "D", "FWD"];
   const labels = { G: "MÅLVAKTER", D: "BACKAR", FWD: "FORWARDS" };
+  if (!Array.isArray(state.data.leagues) || state.data.leagues.length === 0) {
+    return;
+  }
   state.data.leagues.forEach((league) => {
     const container = document.getElementById(`${league.id}-cards`);
     container.innerHTML = "";
@@ -408,13 +438,11 @@ function updateSubmitState() {
   const email = form.elements.email.value.trim();
   const emailValid = /.+@.+\..+/.test(email);
   const hasBothVotes = Boolean(state.selections.shl && state.selections.sdhl);
-  const canSubmit = hasRequired && emailValid && hasBothVotes && !isVotingClosed() && Boolean(state.auth.user);
+  const canSubmit = hasRequired && emailValid && hasBothVotes && !isVotingClosed();
   form.querySelector("#submit").disabled = !canSubmit;
 
   const status = document.getElementById("form-status");
-  if (!state.auth.user) {
-    status.textContent = "Logga in för att rösta.";
-  } else if (isVotingClosed()) {
+  if (isVotingClosed()) {
     status.textContent = "Omröstningen är stängd.";
   } else if (!hasBothVotes) {
     status.textContent = "Välj en spelare i både SDHL och SHL.";
@@ -430,11 +458,6 @@ function handleForm() {
   form.addEventListener("input", updateSubmitState);
   form.addEventListener("submit", async (event) => {
     event.preventDefault();
-    if (!state.auth.user) {
-      showToast("Logga in med e-post först.");
-      openLoginModal();
-      return;
-    }
     if (isVotingClosed()) {
       showToast("Omröstningen är stängd.");
       return;
@@ -480,131 +503,24 @@ function handleForm() {
   }
 }
 
-function openLoginModal() {
-  document.getElementById("login-modal").hidden = false;
-}
-
-function closeLoginModal() {
-  document.getElementById("login-modal").hidden = true;
-}
-
 async function initSupabaseAuth() {
   const { url, anonKey } = getSupabaseConfig();
   if (!url || !anonKey || !window.supabase?.createClient) {
     showToast("Supabase saknar konfiguration (SUPABASE_URL/SUPABASE_ANON_KEY).");
-    renderAuthState();
     return;
   }
 
 state.auth.client = window.supabase.createClient(url, anonKey);
-
-// ✅ TESTLOGG (tillfälligt)
-console.log("Supabase client OK:", state.auth.client);
-const { data: userData, error: userErr } = await state.auth.client.auth.getUser();
-console.log("getUser:", userData, userErr);
-
-const { data } = await state.auth.client.auth.getSession();
-state.auth.user = data.session?.user || null;
-
-if (state.auth.user) {
-  await loadProfile();
-}
   await loadRemoteSettings();
-  renderAuthState();
   renderAll();
-
-  state.auth.client.auth.onAuthStateChange(async (_event, session) => {
-    state.auth.user = session?.user || null;
-    state.auth.profile = null;
-    if (state.auth.user) {
-      await loadProfile();
-    }
-    renderAuthState();
-    renderAll();
-  });
-}
-
-async function loadProfile() {
-  if (!state.auth.client || !state.auth.user) return;
-  const { data, error } = await state.auth.client
-    .from("profiles")
-    .select("*")
-    .eq("id", state.auth.user.id)
-    .maybeSingle();
-  if (error) {
-    showToast("Kunde inte läsa profil.");
-    return;
-  }
-  state.auth.profile = data || null;
-  fillVoteFormFromProfile();
-  maybeShowProfileModal();
-}
-
-function fillVoteFormFromProfile() {
-  if (!state.auth.profile) return;
-  const form = document.getElementById("vote-form");
-  form.elements.firstName.value = state.auth.profile.first_name || "";
-  form.elements.lastName.value = state.auth.profile.last_name || "";
-  form.elements.email.value = state.auth.user?.email || state.auth.profile.email || "";
-  form.elements.phone.value = state.auth.profile.phone || "";
-  form.elements.marketingConsent.checked = Boolean(state.auth.profile.marketing_opt_in);
-}
-
-function maybeShowProfileModal() {
-  const modal = document.getElementById("profile-modal");
-  if (!state.auth.user) {
-    modal.hidden = true;
-    return;
-  }
-  const needsProfile = !isProfileComplete(state.auth.profile);
-  modal.hidden = !needsProfile;
-  const p = state.auth.profile || {};
-  document.getElementById("profile-first-name").value = p.first_name || "";
-  document.getElementById("profile-last-name").value = p.last_name || "";
-  document.getElementById("profile-birth-year").value = p.birth_year || "";
-  document.getElementById("profile-postal-code").value = p.postal_code || "";
-  document.getElementById("profile-phone").value = p.phone || "";
-  document.getElementById("profile-marketing").checked = Boolean(p.marketing_opt_in);
 }
 
 function renderAuthState() {
-  const banner = document.getElementById("auth-banner");
-  const bannerText = document.getElementById("auth-banner-text");
-  const openLogin = document.getElementById("open-login");
-  const logoutUser = document.getElementById("logout-user");
-  const voteForm = document.getElementById("vote-form");
-  const user = state.auth.user;
-  const profileReady = isProfileComplete(state.auth.profile);
-
-  if (!user) {
-    banner.hidden = false;
-    bannerText.textContent = "Logga in med e-post för att rösta.";
-    openLogin.hidden = false;
-    logoutUser.hidden = true;
-  } else if (!profileReady) {
-    banner.hidden = false;
-    bannerText.textContent = "Komplettera din profil för att rösta.";
-    openLogin.hidden = true;
-    logoutUser.hidden = false;
-  } else {
-    banner.hidden = true;
-    logoutUser.hidden = false;
-  }
-
-  voteForm.querySelectorAll("input, button").forEach((el) => {
-    if (el.id === "open-admin") return;
-    if (el.name === "terms") return;
-    if (!user || !profileReady) {
-      if (el.id !== "submit") el.setAttribute("aria-disabled", "true");
-    } else {
-      el.removeAttribute("aria-disabled");
-    }
-  });
-  updateSubmitState();
+  // Auth är borttaget i public vote-läget.
 }
 
 async function loadRemoteSettings() {
-  if (!state.auth.client || !state.auth.user) return;
+  if (!state.auth.client) return;
   const { data, error } = await state.auth.client
     .from("settings")
     .select("key,value")
@@ -624,110 +540,42 @@ async function loadRemoteSettings() {
 }
 
 async function submitVotes(payload) {
-  if (!state.auth.client || !state.auth.user) {
-    return { ok: false, message: "Du måste vara inloggad." };
+  if (!state.auth.client) {
+    return { ok: false, message: "Kunde inte ansluta till databasen." };
   }
 
-  const monthId = state.activeMonthId || toMonthId(new Date());
-  const rows = [
-    { user_id: state.auth.user.id, league_id: "shl", player_id: payload.shl, month_id: monthId },
-    { user_id: state.auth.user.id, league_id: "sdhl", player_id: payload.sdhl, month_id: monthId }
-  ];
+  const { data, error } = await state.auth.client.rpc("submit_vote_public", {
+    p_month_id: state.activeMonthId || toMonthId(new Date()),
+    p_email: payload.email.toLowerCase(),
+    p_first_name: payload.firstName,
+    p_last_name: payload.lastName,
+    p_phone: payload.phone || null,
+    p_marketing_opt_in: Boolean(payload.marketingConsent),
+    p_shl_player_id: payload.shl,
+    p_sdhl_player_id: payload.sdhl
+  });
 
-  const { error } = await state.auth.client.from("votes").insert(rows);
   if (error) {
-    if (error.code === "23505") {
-      return { ok: false, message: "Du har redan röstat i den här ligan denna månad." };
+    if (error.code === "42501") {
+      return { ok: false, message: "RLS blockerar röster utan inloggning. Lägg en EXECUTE-policy för RPC:n submit_vote_public." };
     }
-    return { ok: false, message: "Kunde inte spara röst just nu." };
+    return { ok: false, message: `Kunde inte spara röst: ${formatSupabaseError(error)}` };
   }
+
+  const response = Array.isArray(data) ? data[0] : data;
+  const status = response?.status || (typeof data === "string" ? data : null);
+  if (status === "already_voted") {
+    return { ok: false, message: "Du har redan röstat denna månad." };
+  }
+  if (status !== "ok") {
+    return { ok: false, message: "Oväntat svar från databasen vid röstning." };
+  }
+
   return { ok: true };
 }
 
 function setupAuthHandlers() {
-  document.getElementById("open-login").addEventListener("click", openLoginModal);
-  document.getElementById("close-login").addEventListener("click", closeLoginModal);
-  
-   // ✅ LÄGG GOOGLE HÄR
-  document.getElementById("login-google").addEventListener("click", async () => {
-    if (!state.auth.client) return;
-
-    const { error } = await state.auth.client.auth.signInWithOAuth({
-      provider: "google",
-      options: {
-        redirectTo: window.location.origin
-      }
-    });
-
-    if (error) showToast("Kunde inte logga in med Google.");
-  });
-
-  document.getElementById("email-form").addEventListener("submit", async (event) => {
-    event.preventDefault();
-    if (!state.auth.client) return;
-    const email = document.getElementById("login-email").value.trim();
-    const { error } = await state.auth.client.auth.signInWithOtp({ email });
-    if (error) {
-      showToast("Kunde inte skicka kod.");
-      return;
-    }
-    document.getElementById("otp-form").hidden = false;
-    showToast("Kod skickad till din e-post.");
-  });
-
-  document.getElementById("otp-form").addEventListener("submit", async (event) => {
-    event.preventDefault();
-    if (!state.auth.client) return;
-    const email = document.getElementById("login-email").value.trim();
-    const token = document.getElementById("otp-code").value.trim();
-    const { error } = await state.auth.client.auth.verifyOtp({
-      email,
-      token,
-      type: "email"
-    });
-    if (error) {
-      showToast("Fel eller utgången kod.");
-      return;
-    }
-    closeLoginModal();
-    showToast("Inloggning lyckades.");
-  });
-
-  document.getElementById("profile-form").addEventListener("submit", async (event) => {
-    event.preventDefault();
-    if (!state.auth.client || !state.auth.user) return;
-    const profile = {
-      id: state.auth.user.id,
-      email: state.auth.user.email || "",
-      first_name: document.getElementById("profile-first-name").value.trim(),
-      last_name: document.getElementById("profile-last-name").value.trim(),
-      birth_year: Number(document.getElementById("profile-birth-year").value),
-      postal_code: document.getElementById("profile-postal-code").value.trim(),
-      phone: document.getElementById("profile-phone").value.trim(),
-      marketing_opt_in: Boolean(document.getElementById("profile-marketing").checked)
-    };
-    const { error } = await state.auth.client.from("profiles").upsert(profile, { onConflict: "id" });
-    if (error) {
-      showToast("Kunde inte spara profil.");
-      return;
-    }
-    state.auth.profile = profile;
-    document.getElementById("profile-modal").hidden = true;
-    fillVoteFormFromProfile();
-    renderAuthState();
-    renderAll();
-    showToast("Profil sparad.");
-  });
-
-  document.getElementById("logout-user").addEventListener("click", async () => {
-    if (!state.auth.client) return;
-    await state.auth.client.auth.signOut();
-    sessionStorage.removeItem(RESULTS_UNLOCK_KEY);
-    state.auth.user = null;
-    state.auth.profile = null;
-    renderAuthState();
-    renderAll();
-  });
+  // Login är avstängt i detta läge.
 }
 
 function openAdmin() {
@@ -924,7 +772,7 @@ function renderAll() {
 }
 
 function renderVotingState() {
-  const closed = isVotingClosed() || !state.auth.user || !isProfileComplete(state.auth.profile);
+  const closed = isVotingClosed();
   const closedBanner = document.getElementById("voting-closed");
   closedBanner.hidden = !isVotingClosed();
   document.querySelectorAll(".card").forEach((card) => {
@@ -941,13 +789,13 @@ async function renderResults() {
   const section = document.getElementById("results");
   const grid = document.getElementById("results-grid");
   const resultsUnlocked = sessionStorage.getItem(RESULTS_UNLOCK_KEY) === "true";
-  if (!resultsUnlocked || !state.auth.client || !state.auth.user) {
+  if (!resultsUnlocked || !state.auth.client) {
     section.hidden = true;
     grid.innerHTML = "";
     return;
   }
 
-  const { data, error } = await state.auth.client.rpc("get_results_for_month", {
+  const { data, error } = await state.auth.client.rpc("get_vote_results_public", {
     p_month_id: state.activeMonthId
   });
   if (error || !Array.isArray(data) || data.length === 0) {
@@ -957,15 +805,17 @@ async function renderResults() {
   }
 
   const grouped = data.reduce((acc, row) => {
-    if (!acc[row.league_id]) acc[row.league_id] = [];
-    acc[row.league_id].push(row);
+    const leagueId = row.league_id || row.league;
+    if (!leagueId) return acc;
+    if (!acc[leagueId]) acc[leagueId] = [];
+    acc[leagueId].push(row);
     return acc;
   }, {});
 
   section.hidden = false;
   const blocks = state.data.leagues.map((league) => {
     const byPlayer = (grouped[league.id] || [])
-      .sort((a, b) => Number(b.percentage) - Number(a.percentage))
+      .sort((a, b) => Number(b.pct) - Number(a.pct))
       .slice(0, 3);
     if (byPlayer.length === 0) return "";
 
@@ -975,7 +825,7 @@ async function renderResults() {
         ${byPlayer.map((row) => {
           const player = league.players.find((p) => p.id === row.player_id);
           const name = player?.name || row.player_id;
-          const pct = Math.round(Number(row.percentage) || 0);
+          const pct = Math.round(Number(row.pct) || 0);
           return `
           <div class="result-row">
             <div class="result-label">
@@ -1024,18 +874,3 @@ async function init() {
 
 void init();
 
-
-(async () => {
-  // vänta tills init() hunnit initiera Supabase
-  // (init() await:ar initSupabaseAuth() i slutet)
-  const client = state?.auth?.client;
-
-  if (!client) {
-    console.log("Supabase client saknas fortfarande. Kolla meta-taggarna.");
-    return;
-  }
-
-  const { data, error } = await client.auth.getUser();
-  console.log("USER:", data);
-  console.log("ERROR:", error);
-})();
