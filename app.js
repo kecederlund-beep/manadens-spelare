@@ -496,12 +496,19 @@ async function initSupabaseAuth() {
     return;
   }
 
-  state.auth.client = window.supabase.createClient(url, anonKey);
-  const { data } = await state.auth.client.auth.getSession();
-  state.auth.user = data.session?.user || null;
-  if (state.auth.user) {
-    await loadProfile();
-  }
+state.auth.client = window.supabase.createClient(url, anonKey);
+
+// ✅ TESTLOGG (tillfälligt)
+console.log("Supabase client OK:", state.auth.client);
+const { data: userData, error: userErr } = await state.auth.client.auth.getUser();
+console.log("getUser:", userData, userErr);
+
+const { data } = await state.auth.client.auth.getSession();
+state.auth.user = data.session?.user || null;
+
+if (state.auth.user) {
+  await loadProfile();
+}
   await loadRemoteSettings();
   renderAuthState();
   renderAll();
