@@ -1012,3 +1012,11 @@ async function init() {
 }
 
 void init();
+
+
+(async () => {
+  const { data, error } = await supabase.auth.getUser();
+
+  console.log("USER:", data);
+  console.log("ERROR:", error);
+})();
