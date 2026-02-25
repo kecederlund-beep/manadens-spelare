@@ -4,6 +4,8 @@ const ADMIN_SESSION_KEY = "msp_admin";
 const RESULTS_UNLOCK_KEY = "msp_results_unlocked";
 const ADMIN_PASSWORD = "shl2026"; // change for production
 const DEFAULT_DATA_PATH = "data/defaultData.json";
+const DEFAULT_DATA_VERSION = "2026-02-25-lineup-v1";
+const STORAGE_VERSION_KEY = "msp_data_version";
 
 const defaultData = {
   "sponsor": {
@@ -515,10 +517,12 @@ function loadData() {
       }
       console.warn("Invalid data override, resetting to defaults");
       localStorage.removeItem(STORAGE_KEY);
+      localStorage.removeItem(STORAGE_VERSION_KEY);
     }
   } catch (err) {
     console.warn("Failed to load data override", err);
     localStorage.removeItem(STORAGE_KEY);
+    localStorage.removeItem(STORAGE_VERSION_KEY);
   }
   return structuredClone(defaultData);
 }
@@ -527,8 +531,16 @@ function saveData() {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(state.data));
 }
 
+function markDataVersion(version = DEFAULT_DATA_VERSION) {
+  localStorage.setItem(STORAGE_VERSION_KEY, version);
+}
+
 async function hydrateDefaultDataFromFile() {
-  if (localStorage.getItem(STORAGE_KEY)) return;
+  const hasLocalOverride = Boolean(localStorage.getItem(STORAGE_KEY));
+  const storedVersion = localStorage.getItem(STORAGE_VERSION_KEY);
+  const shouldHydrate = !hasLocalOverride || storedVersion !== DEFAULT_DATA_VERSION;
+  if (!shouldHydrate) return;
+
   try {
     const response = await fetch(DEFAULT_DATA_PATH, { cache: "no-store" });
     if (!response.ok) return;
@@ -537,6 +549,7 @@ async function hydrateDefaultDataFromFile() {
     state.data = data;
     normalizePlayerDefaults();
     saveData();
+    markDataVersion();
   } catch (err) {
     console.warn("Failed to load defaultData.json", err);
   }
@@ -684,6 +697,7 @@ function canVoteNow() {
 
 function resetData() {
   localStorage.removeItem(STORAGE_KEY);
+  localStorage.removeItem(STORAGE_VERSION_KEY);
   state.data = structuredClone(defaultData);
   renderAll();
 }
@@ -1001,21 +1015,12 @@ function setupAuthHandlers() {
 
 function openAdmin() {
   const panel = document.querySelector(".admin");
-  if (sessionStorage.getItem(ADMIN_SESSION_KEY) === "true") {
-    panel.hidden = false;
-    renderAdmin();
-    return;
-  }
-
-  const password = prompt("Admin-lösenord");
-  if (password === ADMIN_PASSWORD) {
+  if (sessionStorage.getItem(ADMIN_SESSION_KEY) !== "true") {
     sessionStorage.setItem(ADMIN_SESSION_KEY, "true");
-    panel.hidden = false;
     showToast("Adminläge aktiverat.");
-    renderAdmin();
-  } else if (password) {
-    showToast("Fel lösenord.");
   }
+  panel.hidden = false;
+  renderAdmin();
 }
 
 function logoutAdmin() {
@@ -1172,6 +1177,7 @@ function setupAdminHandlers() {
         state.data = JSON.parse(text);
         normalizePlayerDefaults();
         saveData();
+        markDataVersion("custom");
         renderAll();
         renderAdmin();
         showToast("Data importerad.");
@@ -1284,7 +1290,9 @@ function triggerConfetti() {
 }
 
 async function init() {
-  hideAuthModals();
+  setupAuthHandlers();
+  setupAdminHandlers();
+  await hydrateDefaultDataFromFile();
   renderAll();
   attachCardListeners();
   handleForm();
