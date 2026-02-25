@@ -1,3 +1,13 @@
+// Supabase init – SKA ligga högst upp
+const SUPABASE_URL = "https://bupgsvxggtftbmjholpp.supabase.co";
+
+const SUPABASE_ANON_KEY = "DIN_HELA_ANON_KEY_HÄR";
+
+const supabase = window.supabase.createClient(
+  SUPABASE_URL,
+  SUPABASE_ANON_KEY
+);
+
 const STORAGE_KEY = "msp_data_override";
 const EMAIL_KEY = "msp_email";
 const ADMIN_SESSION_KEY = "msp_admin";
