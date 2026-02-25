@@ -1005,8 +1005,16 @@ void init();
 
 
 (async () => {
-  const { data, error } = await supabase.auth.getUser();
+  // vänta tills init() hunnit initiera Supabase
+  // (init() await:ar initSupabaseAuth() i slutet)
+  const client = state?.auth?.client;
 
+  if (!client) {
+    console.log("Supabase client saknas fortfarande. Kolla meta-taggarna.");
+    return;
+  }
+
+  const { data, error } = await client.auth.getUser();
   console.log("USER:", data);
   console.log("ERROR:", error);
 })();
