@@ -3,7 +3,6 @@ const EMAIL_KEY = "msp_email";
 const ADMIN_SESSION_KEY = "msp_admin";
 const RESULTS_UNLOCK_KEY = "msp_results_unlocked";
 const ADMIN_PASSWORD = "shl2026"; // change for production
-const PROFILE_REQUIRED_FIELDS = ["first_name", "last_name", "birth_year", "postal_code"];
 
 const defaultData = {
   sponsor: {
@@ -107,9 +106,17 @@ normalizePlayerDefaults();
 function loadData() {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
-    if (raw) return JSON.parse(raw);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (parsed && Array.isArray(parsed.leagues) && parsed.leagues.length > 0) {
+        return parsed;
+      }
+      console.warn("Invalid data override, resetting to defaults");
+      localStorage.removeItem(STORAGE_KEY);
+    }
   } catch (err) {
     console.warn("Failed to load data override", err);
+    localStorage.removeItem(STORAGE_KEY);
   }
   return structuredClone(defaultData);
 }
@@ -120,6 +127,22 @@ function saveData() {
 
 function normalizePlayerDefaults() {
   let changed = false;
+  if (!state.data || typeof state.data !== "object") {
+    state.data = structuredClone(defaultData);
+    changed = true;
+  }
+  if (!Array.isArray(state.data.leagues) || state.data.leagues.length === 0) {
+    state.data.leagues = structuredClone(defaultData.leagues);
+    changed = true;
+  }
+  if (!state.data.sponsor) {
+    state.data.sponsor = structuredClone(defaultData.sponsor);
+    changed = true;
+  }
+  if (!state.data.bannerUrl) {
+    state.data.bannerUrl = defaultData.bannerUrl;
+    changed = true;
+  }
   if (!state.data.settings) {
     state.data.settings = { votingClosed: false };
     changed = true;
@@ -129,6 +152,10 @@ function normalizePlayerDefaults() {
     changed = true;
   }
   state.data.leagues.forEach((league) => {
+    if (!Array.isArray(league.players)) {
+      league.players = [];
+      changed = true;
+    }
     league.players.forEach((player) => {
       if (typeof player.active === "undefined") {
         player.active = true;
@@ -217,19 +244,14 @@ function getSupabaseConfig() {
   return { url, anonKey };
 }
 
-function getAuthRedirectUrl() {
-  const current = new URL(window.location.href);
-  current.hash = "";
-  current.search = "";
-  return current.toString();
-}
 
-function isProfileComplete(profile) {
-  if (!profile) return false;
-  return PROFILE_REQUIRED_FIELDS.every((field) => {
-    const value = profile[field];
-    return value !== null && value !== undefined && String(value).trim() !== "";
-  });
+function formatSupabaseError(error, fallback = "okänt fel") {
+  if (!error) return fallback;
+  const message = String(error.message || "").trim();
+  const details = String(error.details || "").trim();
+  const hint = String(error.hint || "").trim();
+  const code = String(error.code || "").trim();
+  return [message, details, hint, code && `(kod: ${code})`].filter(Boolean).join(" | ") || fallback;
 }
 
 
@@ -279,6 +301,9 @@ function renderSponsor() {
 function renderCards() {
   const order = ["G", "D", "FWD"];
   const labels = { G: "MÅLVAKTER", D: "BACKAR", FWD: "FORWARDS" };
+  if (!Array.isArray(state.data.leagues) || state.data.leagues.length === 0) {
+    return;
+  }
   state.data.leagues.forEach((league) => {
     const container = document.getElementById(`${league.id}-cards`);
     container.innerHTML = "";
@@ -489,64 +514,20 @@ function handleForm() {
   }
 }
 
-
-function setModalVisible(id, visible) {
-  const modal = document.getElementById(id);
-  if (!modal) return;
-  modal.hidden = !visible;
-  modal.style.display = visible ? "" : "none";
-}
-
-function hideAuthModals() {
-  setModalVisible("login-modal", false);
-  setModalVisible("profile-modal", false);
-}
-
-function openLoginModal() {
-  setModalVisible("login-modal", true);
-}
-
-function closeLoginModal() {
-  setModalVisible("login-modal", false);
-}
-
 async function initSupabaseAuth() {
   const { url, anonKey } = getSupabaseConfig();
   if (!url || !anonKey || !window.supabase?.createClient) {
     showToast("Supabase saknar konfiguration (SUPABASE_URL/SUPABASE_ANON_KEY).");
-    renderAuthState();
     return;
   }
 
-  state.auth.client = window.supabase.createClient(url, anonKey);
+state.auth.client = window.supabase.createClient(url, anonKey);
   await loadRemoteSettings();
-  renderAuthState();
   renderAll();
 }
 
-async function loadProfile() {
-  return;
-}
-
-function fillVoteFormFromProfile() {
-  return;
-}
-
-function maybeShowProfileModal() {
-  return false;
-}
-
 function renderAuthState() {
-  const banner = document.getElementById("auth-banner");
-  const bannerText = document.getElementById("auth-banner-text");
-  const openLogin = document.getElementById("open-login");
-  const logoutUser = document.getElementById("logout-user");
-
-  banner.hidden = false;
-  bannerText.textContent = "Ingen inloggning krävs just nu. En e-postadress kan bara rösta en gång per månad.";
-  openLogin.hidden = true;
-  logoutUser.hidden = true;
-  updateSubmitState();
+  // Auth är borttaget i public vote-läget.
 }
 
 async function loadRemoteSettings() {
@@ -574,68 +555,38 @@ async function submitVotes(payload) {
     return { ok: false, message: "Kunde inte ansluta till databasen." };
   }
 
-  const monthId = state.activeMonthId || toMonthId(new Date());
+  const { data, error } = await state.auth.client.rpc("submit_vote_public", {
+    p_month_id: state.activeMonthId || toMonthId(new Date()),
+    p_email: payload.email.toLowerCase(),
+    p_first_name: payload.firstName,
+    p_last_name: payload.lastName,
+    p_phone: payload.phone || null,
+    p_marketing_opt_in: Boolean(payload.marketingConsent),
+    p_shl_player_id: payload.shl,
+    p_sdhl_player_id: payload.sdhl
+  });
 
-  const existingVote = await state.auth.client
-    .from("votes")
-    .select("league_id", { head: false })
-    .eq("user_id", state.auth.user.id)
-    .eq("month_id", monthId)
-    .limit(1);
-
-  if (existingVote.error) {
-    const reason = formatSupabaseError(existingVote.error);
-    return {
-      ok: false,
-      message: `Kunde inte kontrollera tidigare röst: ${reason}`
-    };
-  }
-
-  if (Array.isArray(existingVote.data) && existingVote.data.length > 0) {
-    return { ok: false, message: "Du har redan röstat den här månaden." };
-  }
-
-  const rows = [
-    {
-      league_id: "shl",
-      player_id: payload.shl,
-      month_id: monthId,
-      email,
-      first_name: payload.firstName,
-      last_name: payload.lastName,
-      phone: payload.phone,
-      marketing_consent: payload.marketingConsent,
-      created_at: payload.createdAt
-    },
-    {
-      league_id: "sdhl",
-      player_id: payload.sdhl,
-      month_id: monthId,
-      email,
-      first_name: payload.firstName,
-      last_name: payload.lastName,
-      phone: payload.phone,
-      marketing_consent: payload.marketingConsent,
-      created_at: payload.createdAt
-    }
-  ];
-
-  const { error } = await state.auth.client.from("votes").insert(rows);
   if (error) {
-    if (error.code === "23505") {
-      return { ok: false, message: "Den här e-postadressen har redan röstat denna månad." };
-    }
     if (error.code === "42501") {
-      return { ok: false, message: "Databasen nekar skrivning (RLS/policy). Kontrollera INSERT-policy för votes." };
+      return { ok: false, message: "RLS blockerar röster utan inloggning. Lägg en EXECUTE-policy för RPC:n submit_vote_public." };
     }
     return { ok: false, message: `Kunde inte spara röst: ${formatSupabaseError(error)}` };
+  }
+
+  const response = Array.isArray(data) ? data[0] : data;
+  const status = response?.status || (typeof data === "string" ? data : null);
+  if (status === "already_voted") {
+    return { ok: false, message: "Du har redan röstat denna månad." };
+  }
+  if (status !== "ok") {
+    return { ok: false, message: "Oväntat svar från databasen vid röstning." };
   }
 
   return { ok: true };
 }
 
 function setupAuthHandlers() {
-  // Inloggning används inte i förenklat läge.
+  // Login är avstängt i detta läge.
 }
 
 function openAdmin() {
@@ -855,7 +806,7 @@ async function renderResults() {
     return;
   }
 
-  const { data, error } = await state.auth.client.rpc("get_results_for_month", {
+  const { data, error } = await state.auth.client.rpc("get_vote_results_public", {
     p_month_id: state.activeMonthId
   });
   if (error || !Array.isArray(data) || data.length === 0) {
@@ -865,15 +816,17 @@ async function renderResults() {
   }
 
   const grouped = data.reduce((acc, row) => {
-    if (!acc[row.league_id]) acc[row.league_id] = [];
-    acc[row.league_id].push(row);
+    const leagueId = row.league_id || row.league;
+    if (!leagueId) return acc;
+    if (!acc[leagueId]) acc[leagueId] = [];
+    acc[leagueId].push(row);
     return acc;
   }, {});
 
   section.hidden = false;
   const blocks = state.data.leagues.map((league) => {
     const byPlayer = (grouped[league.id] || [])
-      .sort((a, b) => Number(b.percentage) - Number(a.percentage))
+      .sort((a, b) => Number(b.pct) - Number(a.pct))
       .slice(0, 3);
     if (byPlayer.length === 0) return "";
 
@@ -883,7 +836,7 @@ async function renderResults() {
         ${byPlayer.map((row) => {
           const player = league.players.find((p) => p.id === row.player_id);
           const name = player?.name || row.player_id;
-          const pct = Math.round(Number(row.percentage) || 0);
+          const pct = Math.round(Number(row.pct) || 0);
           return `
           <div class="result-row">
             <div class="result-label">

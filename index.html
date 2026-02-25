@@ -34,10 +34,6 @@
     </header>
 
     <main id="main" class="container">
-      <section class="auth-banner" id="auth-banner" hidden>
-        <p id="auth-banner-text">Logga in med e-post för att rösta.</p>
-        <button class="ghost" id="open-login" type="button">Logga in</button>
-      </section>
 
       <section class="voting-closed" id="voting-closed" hidden>
         <p>Omröstningen är stängd.</p>
@@ -277,71 +273,8 @@
       <p>© Månadens Spelare. Alla röster sparas enligt villkoren.</p>
       <div class="footer-actions">
         <button id="open-admin" class="ghost" type="button">Admin</button>
-        <button id="logout-user" class="ghost" type="button" hidden>Logga ut</button>
       </div>
     </footer>
-
-    <div class="modal-backdrop" id="login-modal" hidden>
-      <section class="modal" role="dialog" aria-modal="true" aria-labelledby="login-title">
-        <h2 id="login-title">Logga in</h2>
-        <p class="section-sub">Vi skickar ett inloggningsmail (kod eller länk) till din e-post, eller fortsätt med Google.</p>
-
-        <button class="primary" id="login-google" type="button">
-          Fortsätt med Google
-        </button>
-
-        <p class="section-sub" style="text-align:center;">eller</p>
-
-        <form id="email-form">
-          <label>
-            <span>E-post</span>
-            <input id="login-email" type="email" required />
-          </label>
-          <button class="primary" type="submit">Skicka kod</button>
-        </form>
-        <form id="otp-form" hidden>
-          <label>
-            <span>Kod (om mailet innehåller kod)</span>
-            <input id="otp-code" type="text" inputmode="numeric" required />
-          </label>
-          <button class="primary" type="submit">Verifiera</button>
-        </form>
-        <button class="ghost" id="close-login" type="button">Stäng</button>
-      </section>
-    </div>
-
-    <div class="modal-backdrop" id="profile-modal" hidden>
-      <section class="modal" role="dialog" aria-modal="true" aria-labelledby="profile-title">
-        <h2 id="profile-title">Komplettera din profil</h2>
-        <form id="profile-form">
-          <label>
-            <span>Förnamn *</span>
-            <input id="profile-first-name" type="text" required />
-          </label>
-          <label>
-            <span>Efternamn *</span>
-            <input id="profile-last-name" type="text" required />
-          </label>
-          <label>
-            <span>Födelseår *</span>
-            <input id="profile-birth-year" type="number" min="1900" max="2100" required />
-          </label>
-          <label>
-            <span>Postnummer *</span>
-            <input id="profile-postal-code" type="text" required />
-          </label>
-          <label>
-            <span>Telefon (valfri, ej verifierad)</span>
-            <input id="profile-phone" type="tel" />
-          </label>
-          <label class="terms">
-            <input id="profile-marketing" type="checkbox" />
-            <span>Jag godkänner marknadsföringsutskick.</span>
-          </label>
-          <button class="primary" type="submit">Spara profil</button>
-        </form>
-      </section>
-    </div>
 
     <div class="toast" id="toast" aria-live="polite"></div>
 
