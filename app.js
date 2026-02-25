@@ -501,7 +501,8 @@ const state = {
     client: null
   },
   activeMonthId: toMonthId(new Date()),
-  remoteVotingClosed: false
+  remoteVotingClosed: false,
+  submitInProgress: false
 };
 
 normalizePlayerDefaults();
@@ -1026,6 +1027,8 @@ function openAdmin() {
     console.error("Admin render failed", err);
     showToast("Kunde inte öppna adminpanelen.");
   }
+  panel.hidden = false;
+  renderAdmin();
 }
 
 function logoutAdmin() {

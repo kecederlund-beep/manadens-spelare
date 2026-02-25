@@ -27,6 +27,11 @@
   box-sizing: border-box;
 }
 
+
+[hidden] {
+  display: none !important;
+}
+
 html,
 body {
   overflow-x: hidden;
