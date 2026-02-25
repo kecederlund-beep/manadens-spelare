@@ -897,9 +897,13 @@ function handleForm() {
       showToast("Omröstningen är stängd.");
       return;
     }
+    if (!state.selections.shl || !state.selections.sdhl) {
+      showToast("Välj en spelare i vardera serie.");
+      return;
+    }
     updateSubmitState();
     if (form.querySelector("#submit").disabled) {
-      showToast("Fyll i alla obligatoriska fält och välj en spelare i både SDHL och SHL.");
+      showToast("Fyll i alla obligatoriska fält.");
       return;
     }
 
@@ -1016,7 +1020,14 @@ function setupAuthHandlers() {
 function openAdmin() {
   const panel = document.querySelector(".admin");
   if (!panel) return;
-  if (sessionStorage.getItem(ADMIN_SESSION_KEY) !== "true") {
+  if (sessionStorage.getItem(ADMIN_SESSION_KEY) === "true") {
+    panel.hidden = false;
+    renderAdmin();
+    return;
+  }
+
+  const password = prompt("Admin-lösenord");
+  if (password === ADMIN_PASSWORD) {
     sessionStorage.setItem(ADMIN_SESSION_KEY, "true");
     showToast("Adminläge aktiverat.");
   }
@@ -1308,12 +1319,6 @@ function triggerConfetti() {
 async function init() {
   setupAuthHandlers();
   setupAdminHandlers();
-
-  document.addEventListener("click", (event) => {
-    const adminTrigger = event.target.closest("#open-admin");
-    if (!adminTrigger) return;
-    openAdmin();
-  });
 
   await hydrateDefaultDataFromFile();
   renderAll();
