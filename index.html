@@ -4,15 +4,13 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="supabase-url" content="https://bupgsvxggtftbmjholpp.supabase.co" />
-<meta name="supabase-anon-key" content="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJ1cGdzdnhnZ3RmdGJtamhvbHBwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE5NDM1NDQsImV4cCI6MjA4NzUxOTU0NH0.LmlIE4EJqKFG-WFE8urkX2jR6NKealyvnCOjWG7Qo08" />
+    <meta name="supabase-anon-key" content="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJ1cGdzdnhnZ3RmdGJtamhvbHBwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE5NDM1NDQsImV4cCI6MjA4NzUxOTU0NH0.LmlIE4EJqKFG-WFE8urkX2jR6NKealyvnCOjWG7Qo08" />
 
     <title>Månadens Spelare – SHL & SDHL</title>
     <meta
       name="description"
       content="Rösta på Månadens Spelare i SHL och SDHL. Välj din favorit, fyll i dina uppgifter och skicka in din röst."
     />
-    <meta name="supabase-url" content="" />
-    <meta name="supabase-anon-key" content="" />
     <link rel="preconnect" href="https://res.cloudinary.com" />
     <link rel="stylesheet" href="styles.css" />
   </head>
@@ -285,19 +283,15 @@
 
     <div class="modal-backdrop" id="login-modal" hidden>
       <section class="modal" role="dialog" aria-modal="true" aria-labelledby="login-title">
-        <h2 id="login-title">Logga in med e-post</h2>
-        <p class="section-sub">Vi skickar en engångskod till din e-post.</p>
-        <div class="modal-backdrop" id="login-modal" hidden>
-  <section class="modal" role="dialog" aria-modal="true" aria-labelledby="login-title">
-    <h2 id="login-title">Logga in</h2>
+        <h2 id="login-title">Logga in</h2>
+        <p class="section-sub">Vi skickar en engångskod till din e-post, eller fortsätt med Google.</p>
 
-    <button class="primary" id="login-google" type="button">
-      Fortsätt med Google
-    </button>
+        <button class="primary" id="login-google" type="button">
+          Fortsätt med Google
+        </button>
 
-    <p class="section-sub" style="text-align:center;">eller</p>
+        <p class="section-sub" style="text-align:center;">eller</p>
 
-    <form id="email-form">
         <form id="email-form">
           <label>
             <span>E-post</span>
