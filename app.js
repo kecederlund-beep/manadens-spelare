@@ -100,7 +100,8 @@ const state = {
     profile: null
   },
   activeMonthId: toMonthId(new Date()),
-  remoteVotingClosed: false
+  remoteVotingClosed: false,
+  submitInProgress: false
 };
 
 normalizePlayerDefaults();
@@ -429,8 +430,15 @@ function handleForm() {
   form.addEventListener("submit", async (event) => {
     event.preventDefault();
     if (!state.auth.user) {
+      state.submitInProgress = true;
       showToast("Logga in för att slutföra och skicka din röst.");
       openLoginModal();
+      return;
+    }
+    if (!isProfileComplete(state.auth.profile)) {
+      state.submitInProgress = true;
+      maybeShowProfileModal(true);
+      showToast("Fyll i din profil för att slutföra rösten.");
       return;
     }
     if (isVotingClosed()) {
@@ -466,6 +474,7 @@ function handleForm() {
     if (resultsSection) {
       resultsSection.scrollIntoView({ behavior: "smooth", block: "start" });
     }
+    state.submitInProgress = false;
     triggerConfetti();
     showToast("Din röst är registrerad. Tack!");
     form.reset();
@@ -511,6 +520,9 @@ async function initSupabaseAuth() {
     state.auth.profile = null;
     if (state.auth.user) {
       await loadProfile();
+      if (state.submitInProgress && !isProfileComplete(state.auth.profile)) {
+        maybeShowProfileModal(true);
+      }
     }
     renderAuthState();
     renderAll();
@@ -530,7 +542,6 @@ async function loadProfile() {
   }
   state.auth.profile = data || null;
   fillVoteFormFromProfile();
-  maybeShowProfileModal();
 }
 
 function fillVoteFormFromProfile() {
@@ -543,14 +554,17 @@ function fillVoteFormFromProfile() {
   form.elements.marketingConsent.checked = Boolean(state.auth.profile.marketing_opt_in);
 }
 
-function maybeShowProfileModal() {
+function maybeShowProfileModal(forceOpen = false) {
   const modal = document.getElementById("profile-modal");
   if (!state.auth.user) {
     modal.hidden = true;
-    return;
+    return false;
   }
   const needsProfile = !isProfileComplete(state.auth.profile);
-  modal.hidden = !needsProfile;
+  const shouldOpen = forceOpen && needsProfile;
+  modal.hidden = !shouldOpen;
+  if (!needsProfile) return false;
+
   const p = state.auth.profile || {};
   document.getElementById("profile-first-name").value = p.first_name || "";
   document.getElementById("profile-last-name").value = p.last_name || "";
@@ -558,6 +572,7 @@ function maybeShowProfileModal() {
   document.getElementById("profile-postal-code").value = p.postal_code || "";
   document.getElementById("profile-phone").value = p.phone || "";
   document.getElementById("profile-marketing").checked = Boolean(p.marketing_opt_in);
+  return shouldOpen;
 }
 
 function renderAuthState() {
@@ -683,7 +698,14 @@ function setupAuthHandlers() {
 
   document.getElementById("profile-form").addEventListener("submit", async (event) => {
     event.preventDefault();
-    if (!state.auth.client || !state.auth.user) return;
+    if (!state.auth.client || !state.auth.user) {
+      showToast("Du behöver vara inloggad för att spara profilen.");
+      return;
+    }
+
+    const submitButton = event.target.querySelector('button[type="submit"]');
+    if (submitButton) submitButton.disabled = true;
+
     const profile = {
       id: state.auth.user.id,
       email: state.auth.user.email || "",
@@ -696,15 +718,23 @@ function setupAuthHandlers() {
     };
     const { error } = await state.auth.client.from("profiles").upsert(profile, { onConflict: "id" });
     if (error) {
-      showToast("Kunde inte spara profil.");
+      showToast(`Kunde inte spara profil: ${error.message || "okänt fel"}`);
+      if (submitButton) submitButton.disabled = false;
       return;
     }
+
     state.auth.profile = profile;
     document.getElementById("profile-modal").hidden = true;
     fillVoteFormFromProfile();
     renderAuthState();
     renderAll();
     showToast("Profil sparad.");
+
+    if (state.submitInProgress) {
+      showToast("Profilen är sparad. Klicka på Skicka röst igen för att slutföra.");
+      state.submitInProgress = false;
+    }
+    if (submitButton) submitButton.disabled = false;
   });
 
   document.getElementById("logout-user").addEventListener("click", async () => {
@@ -713,6 +743,7 @@ function setupAuthHandlers() {
     sessionStorage.removeItem(RESULTS_UNLOCK_KEY);
     state.auth.user = null;
     state.auth.profile = null;
+    state.submitInProgress = false;
     renderAuthState();
     renderAll();
   });
