@@ -647,6 +647,20 @@ async function submitVotes(payload) {
 function setupAuthHandlers() {
   document.getElementById("open-login").addEventListener("click", openLoginModal);
   document.getElementById("close-login").addEventListener("click", closeLoginModal);
+  
+   // ✅ LÄGG GOOGLE HÄR
+  document.getElementById("login-google").addEventListener("click", async () => {
+    if (!state.auth.client) return;
+
+    const { error } = await state.auth.client.auth.signInWithOAuth({
+      provider: "google",
+      options: {
+        redirectTo: window.location.origin
+      }
+    });
+
+    if (error) showToast("Kunde inte logga in med Google.");
+  });
 
   document.getElementById("email-form").addEventListener("submit", async (event) => {
     event.preventDefault();
