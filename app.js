@@ -3,7 +3,6 @@ const EMAIL_KEY = "msp_email";
 const ADMIN_SESSION_KEY = "msp_admin";
 const RESULTS_UNLOCK_KEY = "msp_results_unlocked";
 const ADMIN_PASSWORD = "shl2026"; // change for production
-const PROFILE_REQUIRED_FIELDS = ["first_name", "last_name", "birth_year", "postal_code"];
 
 const defaultData = {
   sponsor: {
@@ -217,6 +216,14 @@ function getSupabaseConfig() {
   return { url, anonKey };
 }
 
+
+function formatSupabaseError(error, fallback = "okänt fel") {
+  if (!error) return fallback;
+  const message = String(error.message || "").trim();
+  const details = String(error.details || "").trim();
+  const hint = String(error.hint || "").trim();
+  const code = String(error.code || "").trim();
+  return [message, details, hint, code && `(kod: ${code})`].filter(Boolean).join(" | ") || fallback;
 function getAuthRedirectUrl() {
   const current = new URL(window.location.href);
   current.hash = "";
@@ -514,14 +521,17 @@ async function initSupabaseAuth() {
   const { url, anonKey } = getSupabaseConfig();
   if (!url || !anonKey || !window.supabase?.createClient) {
     showToast("Supabase saknar konfiguration (SUPABASE_URL/SUPABASE_ANON_KEY).");
-    renderAuthState();
     return;
   }
 
+state.auth.client = window.supabase.createClient(url, anonKey);
   state.auth.client = window.supabase.createClient(url, anonKey);
   await loadRemoteSettings();
-  renderAuthState();
   renderAll();
+}
+
+function renderAuthState() {
+  // Auth är borttaget i public vote-läget.
 }
 
 async function loadProfile() {
@@ -574,6 +584,16 @@ async function submitVotes(payload) {
     return { ok: false, message: "Kunde inte ansluta till databasen." };
   }
 
+  const { data, error } = await state.auth.client.rpc("submit_vote_public", {
+    p_month_id: state.activeMonthId || toMonthId(new Date()),
+    p_email: payload.email.toLowerCase(),
+    p_first_name: payload.firstName,
+    p_last_name: payload.lastName,
+    p_phone: payload.phone || null,
+    p_marketing_opt_in: Boolean(payload.marketingConsent),
+    p_shl_player_id: payload.shl,
+    p_sdhl_player_id: payload.sdhl
+  });
   const monthId = state.activeMonthId || toMonthId(new Date());
 
   const existingVote = await state.auth.client
@@ -620,8 +640,21 @@ async function submitVotes(payload) {
     }
   ];
 
-  const { error } = await state.auth.client.from("votes").insert(rows);
   if (error) {
+    if (error.code === "42501") {
+      return { ok: false, message: "RLS blockerar röster utan inloggning. Lägg en EXECUTE-policy för RPC:n submit_vote_public." };
+    }
+    return { ok: false, message: `Kunde inte spara röst: ${formatSupabaseError(error)}` };
+  }
+
+  const response = Array.isArray(data) ? data[0] : data;
+  const status = response?.status || (typeof data === "string" ? data : null);
+  if (status === "already_voted") {
+    return { ok: false, message: "Du har redan röstat denna månad." };
+  }
+  if (status !== "ok") {
+    return { ok: false, message: "Oväntat svar från databasen vid röstning." };
+  }
     if (error.code === "23505") {
       return { ok: false, message: "Den här e-postadressen har redan röstat denna månad." };
     }
@@ -635,6 +668,7 @@ async function submitVotes(payload) {
 }
 
 function setupAuthHandlers() {
+  // Login är avstängt i detta läge.
   // Inloggning används inte i förenklat läge.
 }
 
@@ -855,7 +889,7 @@ async function renderResults() {
     return;
   }
 
-  const { data, error } = await state.auth.client.rpc("get_results_for_month", {
+  const { data, error } = await state.auth.client.rpc("get_vote_results_public", {
     p_month_id: state.activeMonthId
   });
   if (error || !Array.isArray(data) || data.length === 0) {
@@ -865,15 +899,17 @@ async function renderResults() {
   }
 
   const grouped = data.reduce((acc, row) => {
-    if (!acc[row.league_id]) acc[row.league_id] = [];
-    acc[row.league_id].push(row);
+    const leagueId = row.league_id || row.league;
+    if (!leagueId) return acc;
+    if (!acc[leagueId]) acc[leagueId] = [];
+    acc[leagueId].push(row);
     return acc;
   }, {});
 
   section.hidden = false;
   const blocks = state.data.leagues.map((league) => {
     const byPlayer = (grouped[league.id] || [])
-      .sort((a, b) => Number(b.percentage) - Number(a.percentage))
+      .sort((a, b) => Number(b.pct) - Number(a.pct))
       .slice(0, 3);
     if (byPlayer.length === 0) return "";
 
@@ -883,7 +919,7 @@ async function renderResults() {
         ${byPlayer.map((row) => {
           const player = league.players.find((p) => p.id === row.player_id);
           const name = player?.name || row.player_id;
-          const pct = Math.round(Number(row.percentage) || 0);
+          const pct = Math.round(Number(row.pct) || 0);
           return `
           <div class="result-row">
             <div class="result-label">
