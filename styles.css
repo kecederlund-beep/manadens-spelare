@@ -114,6 +114,7 @@ a {
 
 .top > * {
   width: 100%;
+  margin-inline: auto;
 }
 
 .banner {
@@ -136,8 +137,11 @@ a {
 .sponsor {
   display: grid;
   justify-items: center;
+  align-items: center;
   gap: 4px;
   padding: 8px 0 20px;
+  margin-inline: auto;
+  text-align: center;
 }
 
 .sponsor-logo {
@@ -242,6 +246,7 @@ a {
 .cards {
   display: grid;
   gap: 10px;
+  min-height: clamp(320px, 56vh, 620px);
 }
 
 .voting-closed {
@@ -537,6 +542,13 @@ button.ghost {
   letter-spacing: 0.03em;
 }
 
+
+.results-fallback {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: 0.94rem;
+}
+
 .modal-backdrop {
   position: fixed;
   inset: 0;
@@ -669,6 +681,14 @@ label.file input {
   grid-template-columns: auto 1fr;
   align-items: center;
   gap: 10px;
+}
+
+
+@media (max-width: 559px) {
+  .welcome-headline {
+    white-space: normal;
+    text-wrap: balance;
+  }
 }
 
 @media (min-width: 560px) {
