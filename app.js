@@ -710,6 +710,54 @@ function showToast(message) {
   showToast.timer = setTimeout(() => toast.classList.remove("show"), 2400);
 }
 
+
+function setMissingLeagueHighlight(leagueId) {
+  const section = document.querySelector(`[data-league-section="${leagueId}"]`);
+  if (section) section.classList.add("missing-selection");
+}
+
+function clearMissingLeagueHighlight(leagueId) {
+  const section = document.querySelector(`[data-league-section="${leagueId}"]`);
+  if (section) section.classList.remove("missing-selection");
+}
+
+function clearAllMissingLeagueHighlights() {
+  document.querySelectorAll("[data-league-section]").forEach((section) => {
+    section.classList.remove("missing-selection");
+  });
+}
+
+function showCenterOverlay(message, options = {}) {
+  const overlay = document.getElementById("feedback-overlay");
+  const text = document.getElementById("feedback-message");
+  if (!overlay || !text) {
+    showToast(message);
+    options.onClose?.();
+    return;
+  }
+
+  const timeoutMs = options.timeoutMs || 2000;
+  text.textContent = message;
+  overlay.hidden = false;
+
+  const close = () => {
+    overlay.hidden = true;
+    overlay.removeEventListener("click", onClick);
+    document.removeEventListener("keydown", onKeydown);
+    clearTimeout(timer);
+    options.onClose?.();
+  };
+
+  const onClick = () => close();
+  const onKeydown = (event) => {
+    if (event.key === "Escape") close();
+  };
+
+  overlay.addEventListener("click", onClick);
+  document.addEventListener("keydown", onKeydown);
+  const timer = setTimeout(close, timeoutMs);
+}
+
 function renderSponsor() {
   const headline = document.getElementById("welcome-headline");
   const sponsorLogo = document.querySelector(".sponsor-logo");
@@ -848,6 +896,7 @@ function attachCardListeners() {
       const leagueId = card.dataset.league;
       const playerId = card.dataset.playerId;
       state.selections[leagueId] = playerId;
+      clearMissingLeagueHighlight(leagueId);
       updateSelectionUI(leagueId);
       updateSubmitState();
 
@@ -898,9 +947,14 @@ function handleForm() {
       return;
     }
     if (!state.selections.shl || !state.selections.sdhl) {
+      const missingLeague = state.selections.sdhl ? "shl" : "sdhl";
+      setMissingLeagueHighlight(missingLeague);
       showToast("Välj en spelare i vardera serie.");
+      const missingSectionTitle = document.getElementById(`${missingLeague}-title`);
+      if (missingSectionTitle) missingSectionTitle.scrollIntoView({ behavior: "smooth", block: "start" });
       return;
     }
+    clearAllMissingLeagueHighlights();
     updateSubmitState();
     if (form.querySelector("#submit").disabled) {
       showToast("Fyll i alla obligatoriska fält.");
@@ -921,17 +975,25 @@ function handleForm() {
     localStorage.setItem(EMAIL_KEY, payload.email);
     const voteResult = await submitVotes(payload);
     if (!voteResult.ok) {
-      showToast(voteResult.message);
+      if (voteResult.code === "already_voted") {
+        showCenterOverlay("Du har redan röstat");
+      } else {
+        showToast(voteResult.message);
+      }
       return;
     }
     sessionStorage.setItem(RESULTS_UNLOCK_KEY, "true");
     await renderResults();
-    const resultsSection = document.getElementById("results-title");
-    if (resultsSection) {
-      resultsSection.scrollIntoView({ behavior: "smooth", block: "start" });
-    }
     triggerConfetti();
-    showToast("Din röst är registrerad. Tack!");
+    showCenterOverlay("Tack för din röst", {
+      timeoutMs: 1900,
+      onClose: () => {
+        const resultsSection = document.getElementById("results-title");
+        if (resultsSection) {
+          resultsSection.scrollIntoView({ behavior: "smooth", block: "start" });
+        }
+      }
+    });
     form.reset();
     updateSubmitState();
   });
@@ -1004,7 +1066,7 @@ async function submitVotes(payload) {
   const response = Array.isArray(data) ? data[0] : data;
   const status = response?.status || (typeof data === "string" ? data : null);
   if (status === "already_voted") {
-    return { ok: false, message: "Du har redan röstat denna månad." };
+    return { ok: false, code: "already_voted", message: "Du har redan röstat denna månad." };
   }
   if (status !== "ok") {
     return { ok: false, message: "Oväntat svar från databasen vid röstning." };

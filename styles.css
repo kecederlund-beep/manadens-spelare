@@ -501,6 +501,42 @@ button.ghost {
   transform: translateY(0);
 }
 
+
+.vote.missing-selection .section-head {
+  outline: 2px solid rgba(255, 213, 74, 0.85);
+  border-radius: var(--radius-sm);
+  padding: 8px 10px;
+  background: rgba(255, 213, 74, 0.08);
+}
+
+.feedback-overlay {
+  position: fixed;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  background: rgba(7, 3, 4, 0.62);
+  backdrop-filter: blur(2px);
+  -webkit-backdrop-filter: blur(2px);
+  z-index: 40;
+  padding: 16px;
+}
+
+.feedback-modal {
+  width: min(430px, 100%);
+  background: rgba(20, 6, 10, 0.94);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-soft);
+  padding: 16px 18px;
+  text-align: center;
+}
+
+.feedback-modal p {
+  margin: 0;
+  font-size: 1rem;
+  letter-spacing: 0.03em;
+}
+
 .modal-backdrop {
   position: fixed;
   inset: 0;
