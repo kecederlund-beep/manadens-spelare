@@ -1,7 +1,7 @@
 // Supabase init – SKA ligga högst upp
 const SUPABASE_URL = "https://bupgsvxggtftbmjholpp.supabase.co";
 
-const SUPABASE_ANON_KEY = "DIN_HELA_ANON_KEY_HÄR";
+const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJ1cGdzdnhnZ3RmdGJtamhvbHBwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE5NDM1NDQsImV4cCI6MjA4NzUxOTU0NH0.LmlIE4EJqKFG-WFE8urkX2jR6NKealyvnCOjWG7Qo08";
 
 const supabase = window.supabase.createClient(
   SUPABASE_URL,
