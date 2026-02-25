@@ -219,6 +219,13 @@ function getSupabaseConfig() {
   return { url, anonKey };
 }
 
+function getAuthRedirectUrl() {
+  const current = new URL(window.location.href);
+  current.hash = "";
+  current.search = "";
+  return current.toString();
+}
+
 function isProfileComplete(profile) {
   if (!profile) return false;
   return PROFILE_REQUIRED_FIELDS.every((field) => {
@@ -488,19 +495,24 @@ function handleForm() {
 }
 
 
+function setModalVisible(id, visible) {
+  const modal = document.getElementById(id);
+  if (!modal) return;
+  modal.hidden = !visible;
+  modal.style.display = visible ? "" : "none";
+}
+
 function hideAuthModals() {
-  const loginModal = document.getElementById("login-modal");
-  const profileModal = document.getElementById("profile-modal");
-  if (loginModal) loginModal.hidden = true;
-  if (profileModal) profileModal.hidden = true;
+  setModalVisible("login-modal", false);
+  setModalVisible("profile-modal", false);
 }
 
 function openLoginModal() {
-  document.getElementById("login-modal").hidden = false;
+  setModalVisible("login-modal", true);
 }
 
 function closeLoginModal() {
-  document.getElementById("login-modal").hidden = true;
+  setModalVisible("login-modal", false);
 }
 
 async function initSupabaseAuth() {
@@ -531,7 +543,7 @@ async function initSupabaseAuth() {
       if (state.submitInProgress && !isProfileComplete(state.auth.profile)) {
         maybeShowProfileModal(true);
       } else {
-        document.getElementById("profile-modal").hidden = true;
+        setModalVisible("profile-modal", false);
       }
     } else {
       hideAuthModals();
@@ -574,7 +586,7 @@ function maybeShowProfileModal(forceOpen = false) {
   }
   const needsProfile = !isProfileComplete(state.auth.profile);
   const shouldOpen = forceOpen && needsProfile;
-  modal.hidden = !shouldOpen;
+  setModalVisible("profile-modal", shouldOpen);
   if (!needsProfile) return false;
 
   const p = state.auth.profile || {};
@@ -670,7 +682,7 @@ function setupAuthHandlers() {
     const { error } = await state.auth.client.auth.signInWithOAuth({
       provider: "google",
       options: {
-        redirectTo: window.location.origin
+        redirectTo: getAuthRedirectUrl()
       }
     });
 
@@ -681,13 +693,19 @@ function setupAuthHandlers() {
     event.preventDefault();
     if (!state.auth.client) return;
     const email = document.getElementById("login-email").value.trim();
-    const { error } = await state.auth.client.auth.signInWithOtp({ email });
+    const { error } = await state.auth.client.auth.signInWithOtp({
+      email,
+      options: {
+        emailRedirectTo: getAuthRedirectUrl(),
+        shouldCreateUser: true
+      }
+    });
     if (error) {
-      showToast("Kunde inte skicka kod.");
+      showToast(`Kunde inte skicka inloggning: ${error.message || "okänt fel"}`);
       return;
     }
     document.getElementById("otp-form").hidden = false;
-    showToast("Kod skickad till din e-post.");
+    showToast("Mail skickat. Använd kod om du fått en kod, annars öppna länken i mailet.");
   });
 
   document.getElementById("otp-form").addEventListener("submit", async (event) => {
@@ -743,7 +761,7 @@ function setupAuthHandlers() {
       }
 
       state.auth.profile = profile;
-      document.getElementById("profile-modal").hidden = true;
+      setModalVisible("profile-modal", false);
       fillVoteFormFromProfile();
       renderAuthState();
       renderAll();
@@ -1035,6 +1053,21 @@ async function renderResults() {
   grid.innerHTML = blocks.filter(Boolean).join("");
 }
 
+function handleAuthCallbackErrors() {
+  const rawHash = String(window.location.hash || "").replace(/^#/, "");
+  if (!rawHash) return;
+  const params = new URLSearchParams(rawHash);
+  const error = params.get("error");
+  const description = params.get("error_description");
+  if (!error) return;
+
+  const text = description
+    ? decodeURIComponent(description.replace(/\+/g, " "))
+    : "Inloggning misslyckades.";
+  showToast(`Inloggningsfel: ${text}`);
+  history.replaceState(null, "", window.location.pathname + window.location.search);
+}
+
 function triggerConfetti() {
   if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
   if (typeof window.confetti !== "function") return;
@@ -1057,6 +1090,7 @@ function triggerConfetti() {
 
 async function init() {
   hideAuthModals();
+  handleAuthCallbackErrors();
   renderAll();
   attachCardListeners();
   handleForm();
