@@ -95,9 +95,7 @@ const state = {
   data: loadData(),
   selections: { shl: null, sdhl: null },
   auth: {
-    client: null,
-    user: null,
-    profile: null
+    client: null
   },
   activeMonthId: toMonthId(new Date()),
   remoteVotingClosed: false,
@@ -239,7 +237,7 @@ function isVotingClosed() {
 }
 
 function canVoteNow() {
-  return Boolean(state.auth.user && isProfileComplete(state.auth.profile) && !isVotingClosed());
+  return !isVotingClosed();
 }
 
 function resetData() {
@@ -436,18 +434,6 @@ function handleForm() {
   form.addEventListener("input", updateSubmitState);
   form.addEventListener("submit", async (event) => {
     event.preventDefault();
-    if (!state.auth.user) {
-      state.submitInProgress = true;
-      showToast("Logga in för att slutföra och skicka din röst.");
-      openLoginModal();
-      return;
-    }
-    if (!isProfileComplete(state.auth.profile)) {
-      state.submitInProgress = true;
-      maybeShowProfileModal(true);
-      showToast("Fyll i din profil för att slutföra rösten.");
-      return;
-    }
     if (isVotingClosed()) {
       showToast("Omröstningen är stängd.");
       return;
@@ -481,7 +467,6 @@ function handleForm() {
     if (resultsSection) {
       resultsSection.scrollIntoView({ behavior: "smooth", block: "start" });
     }
-    state.submitInProgress = false;
     triggerConfetti();
     showToast("Din röst är registrerad. Tack!");
     form.reset();
@@ -524,79 +509,21 @@ async function initSupabaseAuth() {
   }
 
   state.auth.client = window.supabase.createClient(url, anonKey);
-
-  const { data } = await state.auth.client.auth.getSession();
-  state.auth.user = data.session?.user || null;
-
-  if (state.auth.user) {
-    await loadProfile();
-  }
   await loadRemoteSettings();
   renderAuthState();
   renderAll();
-
-  state.auth.client.auth.onAuthStateChange(async (_event, session) => {
-    state.auth.user = session?.user || null;
-    state.auth.profile = null;
-    if (state.auth.user) {
-      await loadProfile();
-      if (state.submitInProgress && !isProfileComplete(state.auth.profile)) {
-        maybeShowProfileModal(true);
-      } else {
-        setModalVisible("profile-modal", false);
-      }
-    } else {
-      hideAuthModals();
-    }
-    renderAuthState();
-    renderAll();
-  });
 }
 
 async function loadProfile() {
-  if (!state.auth.client || !state.auth.user) return;
-  const { data, error } = await state.auth.client
-    .from("profiles")
-    .select("*")
-    .eq("id", state.auth.user.id)
-    .maybeSingle();
-  if (error) {
-    showToast("Kunde inte läsa profil.");
-    return;
-  }
-  state.auth.profile = data || null;
-  fillVoteFormFromProfile();
+  return;
 }
 
 function fillVoteFormFromProfile() {
-  if (!state.auth.profile) return;
-  const form = document.getElementById("vote-form");
-  form.elements.firstName.value = state.auth.profile.first_name || "";
-  form.elements.lastName.value = state.auth.profile.last_name || "";
-  form.elements.email.value = state.auth.user?.email || state.auth.profile.email || "";
-  form.elements.phone.value = state.auth.profile.phone || "";
-  form.elements.marketingConsent.checked = Boolean(state.auth.profile.marketing_opt_in);
+  return;
 }
 
-function maybeShowProfileModal(forceOpen = false) {
-  const modal = document.getElementById("profile-modal");
-  if (!state.auth.user) {
-    modal.hidden = true;
-    return false;
-  }
-  const needsProfile = !isProfileComplete(state.auth.profile);
-  const shouldOpen = forceOpen && needsProfile;
-  setModalVisible("profile-modal", shouldOpen);
-  if (!needsProfile) return false;
-
-  const p = state.auth.profile || {};
-  document.getElementById("profile-first-name").value = p.first_name || "";
-  document.getElementById("profile-last-name").value = p.last_name || "";
-  document.getElementById("profile-birth-year").value = p.birth_year || "";
-  document.getElementById("profile-postal-code").value = p.postal_code || "";
-  document.getElementById("profile-phone").value = p.phone || "";
-  document.getElementById("profile-marketing").checked = Boolean(p.marketing_opt_in);
-  return shouldOpen;
+function maybeShowProfileModal() {
+  return false;
 }
 
 function renderAuthState() {
@@ -604,34 +531,16 @@ function renderAuthState() {
   const bannerText = document.getElementById("auth-banner-text");
   const openLogin = document.getElementById("open-login");
   const logoutUser = document.getElementById("logout-user");
-  const voteForm = document.getElementById("vote-form");
-  const user = state.auth.user;
-  const profileReady = isProfileComplete(state.auth.profile);
 
-  if (!user) {
-    banner.hidden = false;
-    bannerText.textContent = "Fyll i dina val först. Du loggar in när du klickar på Skicka röst.";
-    openLogin.hidden = false;
-    logoutUser.hidden = true;
-  } else if (!profileReady) {
-    banner.hidden = false;
-    bannerText.textContent = "Komplettera din profil för att rösta.";
-    openLogin.hidden = true;
-    logoutUser.hidden = false;
-  } else {
-    banner.hidden = true;
-    logoutUser.hidden = false;
-  }
-
-  voteForm.querySelectorAll("input, button").forEach((el) => {
-    if (el.id === "open-admin") return;
-    el.removeAttribute("aria-disabled");
-  });
+  banner.hidden = false;
+  bannerText.textContent = "Ingen inloggning krävs just nu. En e-postadress kan bara rösta en gång per månad.";
+  openLogin.hidden = true;
+  logoutUser.hidden = true;
   updateSubmitState();
 }
 
 async function loadRemoteSettings() {
-  if (!state.auth.client || !state.auth.user) return;
+  if (!state.auth.client) return;
   const { data, error } = await state.auth.client
     .from("settings")
     .select("key,value")
@@ -651,144 +560,68 @@ async function loadRemoteSettings() {
 }
 
 async function submitVotes(payload) {
-  if (!state.auth.client || !state.auth.user) {
-    return { ok: false, message: "Du måste vara inloggad." };
+  if (!state.auth.client) {
+    return { ok: false, message: "Kunde inte ansluta till databasen." };
   }
 
   const monthId = state.activeMonthId || toMonthId(new Date());
+  const email = payload.email.toLowerCase();
+
+  const existing = await state.auth.client
+    .from("votes")
+    .select("id", { count: "exact", head: true })
+    .eq("month_id", monthId)
+    .ilike("email", email);
+
+  if (existing.error) {
+    if (String(existing.error.message || "").toLowerCase().includes("email")) {
+      return { ok: false, message: "Databasen saknar kolumnen 'email' i votes. Lägg till den i Supabase för att kunna stoppa dubbelröster." };
+    }
+    return { ok: false, message: `Kunde inte kontrollera tidigare röst: ${existing.error.message || "okänt fel"}` };
+  }
+
+  if ((existing.count || 0) > 0) {
+    return { ok: false, message: "Den här e-postadressen har redan röstat denna månad." };
+  }
+
   const rows = [
-    { user_id: state.auth.user.id, league_id: "shl", player_id: payload.shl, month_id: monthId },
-    { user_id: state.auth.user.id, league_id: "sdhl", player_id: payload.sdhl, month_id: monthId }
+    {
+      league_id: "shl",
+      player_id: payload.shl,
+      month_id: monthId,
+      email,
+      first_name: payload.firstName,
+      last_name: payload.lastName,
+      phone: payload.phone,
+      marketing_consent: payload.marketingConsent,
+      created_at: payload.createdAt
+    },
+    {
+      league_id: "sdhl",
+      player_id: payload.sdhl,
+      month_id: monthId,
+      email,
+      first_name: payload.firstName,
+      last_name: payload.lastName,
+      phone: payload.phone,
+      marketing_consent: payload.marketingConsent,
+      created_at: payload.createdAt
+    }
   ];
 
   const { error } = await state.auth.client.from("votes").insert(rows);
   if (error) {
     if (error.code === "23505") {
-      return { ok: false, message: "Du har redan röstat i den här ligan denna månad." };
+      return { ok: false, message: "Den här e-postadressen har redan röstat denna månad." };
     }
-    return { ok: false, message: "Kunde inte spara röst just nu." };
+    return { ok: false, message: `Kunde inte spara röst: ${error.message || "okänt fel"}` };
   }
+
   return { ok: true };
 }
 
 function setupAuthHandlers() {
-  document.getElementById("open-login").addEventListener("click", openLoginModal);
-  document.getElementById("close-login").addEventListener("click", closeLoginModal);
-  
-   // ✅ LÄGG GOOGLE HÄR
-  document.getElementById("login-google").addEventListener("click", async () => {
-    if (!state.auth.client) return;
-
-    const { error } = await state.auth.client.auth.signInWithOAuth({
-      provider: "google",
-      options: {
-        redirectTo: getAuthRedirectUrl()
-      }
-    });
-
-    if (error) showToast("Kunde inte logga in med Google.");
-  });
-
-  document.getElementById("email-form").addEventListener("submit", async (event) => {
-    event.preventDefault();
-    if (!state.auth.client) return;
-    const email = document.getElementById("login-email").value.trim();
-    const { error } = await state.auth.client.auth.signInWithOtp({
-      email,
-      options: {
-        emailRedirectTo: getAuthRedirectUrl(),
-        shouldCreateUser: true
-      }
-    });
-    if (error) {
-      showToast(`Kunde inte skicka inloggning: ${error.message || "okänt fel"}`);
-      return;
-    }
-    document.getElementById("otp-form").hidden = false;
-    showToast("Mail skickat. Använd kod om du fått en kod, annars öppna länken i mailet.");
-  });
-
-  document.getElementById("otp-form").addEventListener("submit", async (event) => {
-    event.preventDefault();
-    if (!state.auth.client) return;
-    const email = document.getElementById("login-email").value.trim();
-    const token = document.getElementById("otp-code").value.trim();
-    const { error } = await state.auth.client.auth.verifyOtp({
-      email,
-      token,
-      type: "email"
-    });
-    if (error) {
-      showToast("Fel eller utgången kod.");
-      return;
-    }
-    closeLoginModal();
-    showToast("Inloggning lyckades.");
-  });
-
-  document.getElementById("profile-form").addEventListener("submit", async (event) => {
-    event.preventDefault();
-    if (!state.auth.client || !state.auth.user) {
-      showToast("Du behöver vara inloggad för att spara profilen.");
-      return;
-    }
-
-    const submitButton = event.target.querySelector('button[type="submit"]');
-    if (submitButton) submitButton.disabled = true;
-
-    const profile = {
-      id: state.auth.user.id,
-      email: state.auth.user.email || "",
-      first_name: document.getElementById("profile-first-name").value.trim(),
-      last_name: document.getElementById("profile-last-name").value.trim(),
-      birth_year: Number(document.getElementById("profile-birth-year").value),
-      postal_code: document.getElementById("profile-postal-code").value.trim(),
-      phone: document.getElementById("profile-phone").value.trim(),
-      marketing_opt_in: Boolean(document.getElementById("profile-marketing").checked)
-    };
-
-    if (!profile.first_name || !profile.last_name || !profile.birth_year || !profile.postal_code) {
-      showToast("Fyll i alla obligatoriska profilfält.");
-      if (submitButton) submitButton.disabled = false;
-      return;
-    }
-
-    try {
-      const { error } = await state.auth.client.from("profiles").upsert(profile, { onConflict: "id" });
-      if (error) {
-        showToast(`Kunde inte spara profil: ${error.message || "okänt fel"}`);
-        return;
-      }
-
-      state.auth.profile = profile;
-      setModalVisible("profile-modal", false);
-      fillVoteFormFromProfile();
-      renderAuthState();
-      renderAll();
-      showToast("Profil sparad.");
-
-      if (state.submitInProgress) {
-        showToast("Profilen är sparad. Klicka på Skicka röst igen för att slutföra.");
-        state.submitInProgress = false;
-      }
-    } catch (err) {
-      showToast("Tekniskt fel vid profilsparning. Försök igen.");
-      console.error("Profile save failed", err);
-    } finally {
-      if (submitButton) submitButton.disabled = false;
-    }
-  });
-
-  document.getElementById("logout-user").addEventListener("click", async () => {
-    if (!state.auth.client) return;
-    await state.auth.client.auth.signOut();
-    sessionStorage.removeItem(RESULTS_UNLOCK_KEY);
-    state.auth.user = null;
-    state.auth.profile = null;
-    state.submitInProgress = false;
-    renderAuthState();
-    renderAll();
-  });
+  // Inloggning används inte i förenklat läge.
 }
 
 function openAdmin() {
@@ -1002,7 +835,7 @@ async function renderResults() {
   const section = document.getElementById("results");
   const grid = document.getElementById("results-grid");
   const resultsUnlocked = sessionStorage.getItem(RESULTS_UNLOCK_KEY) === "true";
-  if (!resultsUnlocked || !state.auth.client || !state.auth.user) {
+  if (!resultsUnlocked || !state.auth.client) {
     section.hidden = true;
     grid.innerHTML = "";
     return;
@@ -1053,21 +886,6 @@ async function renderResults() {
   grid.innerHTML = blocks.filter(Boolean).join("");
 }
 
-function handleAuthCallbackErrors() {
-  const rawHash = String(window.location.hash || "").replace(/^#/, "");
-  if (!rawHash) return;
-  const params = new URLSearchParams(rawHash);
-  const error = params.get("error");
-  const description = params.get("error_description");
-  if (!error) return;
-
-  const text = description
-    ? decodeURIComponent(description.replace(/\+/g, " "))
-    : "Inloggning misslyckades.";
-  showToast(`Inloggningsfel: ${text}`);
-  history.replaceState(null, "", window.location.pathname + window.location.search);
-}
-
 function triggerConfetti() {
   if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
   if (typeof window.confetti !== "function") return;
@@ -1090,7 +908,6 @@ function triggerConfetti() {
 
 async function init() {
   hideAuthModals();
-  handleAuthCallbackErrors();
   renderAll();
   attachCardListeners();
   handleForm();
