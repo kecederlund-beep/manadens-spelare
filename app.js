@@ -5,89 +5,490 @@ const RESULTS_UNLOCK_KEY = "msp_results_unlocked";
 const ADMIN_PASSWORD = "shl2026"; // change for production
 
 const defaultData = {
-  sponsor: {
-    name: "Ductus",
-    logoUrl: "https://res.cloudinary.com/dufekxhkq/image/upload/v1758878747/banner_omro%CC%88stning_vit_tmguie.png",
-    linkUrl: "https://example.com"
+  "sponsor": {
+    "name": "Ductus",
+    "logoUrl": "https://res.cloudinary.com/dufekxhkq/image/upload/v1771911570/Ductus-logo-white_cyc5no.png",
+    "linkUrl": "https://example.com"
   },
-  bannerUrl: "https://res.cloudinary.com/dufekxhkq/image/upload/v1758878747/banner_omro%CC%88stning_vit_tmguie.png",
-  settings: {
-    votingClosed: false
-  },
-  leagues: [
+  "bannerUrl": "https://res.cloudinary.com/dufekxhkq/image/upload/v1758878747/banner_omro%CC%88stning_vit_tmguie.png",
+  "leagues": [
     {
-      id: "shl",
-      name: "SHL",
-      players: [
+      "id": "shl",
+      "name": "SHL",
+      "players": [
         {
-          id: "shl-1",
-          active: true,
-          number: 28,
-          name: "Erik Lund",
-          country: "SE",
-          position: "F",
-          imageUrl: "https://res.cloudinary.com/dufekxhkq/image/upload/v1758874547/9x16_il2fgk.png",
-          stats: []
+          "id": "shl-1",
+          "active": true,
+          "name": "Markus Nurmi",
+          "team": "Finland",
+          "position": "F",
+          "number": 51,
+          "imageUrl": "https://res.cloudinary.com/dufekxhkq/image/upload/v1771862012/51_Markus_Nurmi_3_bbdftx.png",
+          "stats": []
         },
         {
-          id: "shl-2",
-          active: true,
-          number: 19,
-          name: "Mikael Sjödin",
-          country: "SE",
-          position: "F",
-          imageUrl: "https://res.cloudinary.com/dufekxhkq/image/upload/v1758874547/9x16_il2fgk.png",
-          stats: []
+          "id": "shl-2",
+          "active": true,
+          "name": "Isac Hedqvist",
+          "team": "Sverige",
+          "position": "F",
+          "number": 6,
+          "imageUrl": "https://res.cloudinary.com/dufekxhkq/image/upload/v1771862012/06_Isac_Hedqvist_4_htn9a5.png",
+          "stats": []
         },
         {
-          id: "shl-3",
-          active: true,
-          number: 1,
-          name: "Anton Berg",
-          country: "SE",
-          position: "G",
-          imageUrl: "https://res.cloudinary.com/dufekxhkq/image/upload/v1758874547/9x16_il2fgk.png",
-          stats: []
+          "id": "shl-3",
+          "active": true,
+          "name": "Filip Eriksson",
+          "team": "Sverige",
+          "position": "F",
+          "number": 25,
+          "imageUrl": "https://res.cloudinary.com/dufekxhkq/image/upload/v1771862011/23_Filip_Eriksson_3_dkxdv3.png",
+          "stats": []
+        },
+        {
+          "id": "shl-1771917318978",
+          "active": true,
+          "name": "Joel Lassinantti",
+          "team": "Sverige",
+          "position": "G",
+          "number": 34,
+          "imageUrl": "https://res.cloudinary.com/dufekxhkq/image/upload/v1771917312/34_Joel_Lassinantti_1_qixvyh.png",
+          "stats": []
+        },
+        {
+          "id": "shl-1771917335335",
+          "active": true,
+          "name": "Erik Gustafsson",
+          "team": "Sverige",
+          "position": "D",
+          "number": 29,
+          "imageUrl": "https://res.cloudinary.com/dufekxhkq/image/upload/v1771917315/29_Erik_Gustafsson_2_zrfnzn.png",
+          "stats": []
+        },
+        {
+          "id": "shl-1771918557123",
+          "active": true,
+          "name": "Matteus Ward",
+          "team": "Sverige",
+          "position": "G",
+          "number": 1,
+          "imageUrl": "https://res.cloudinary.com/dufekxhkq/image/upload/v1771918538/31_Matteus_Ward_1_vcnkie.jpg",
+          "stats": []
+        },
+        {
+          "id": "shl-1771918571532",
+          "active": true,
+          "name": "Jesper Sellgren",
+          "team": "Sverige",
+          "position": "D",
+          "number": 23,
+          "imageUrl": "https://res.cloudinary.com/dufekxhkq/image/upload/v1771918539/23_Jesper_Sellgren_1_r4nuii.jpg",
+          "stats": []
+        },
+        {
+          "id": "shl-1771918585699",
+          "active": true,
+          "name": "Frederic Allard",
+          "team": "Kanada",
+          "position": "D",
+          "number": 3,
+          "imageUrl": "https://res.cloudinary.com/dufekxhkq/image/upload/v1771918538/03_Frederic_Allard_1_or2yul.jpg",
+          "stats": []
+        },
+        {
+          "id": "shl-1771918610087",
+          "active": true,
+          "name": "Oskari Laaksonen",
+          "team": "Finland",
+          "position": "D",
+          "number": 27,
+          "imageUrl": "https://res.cloudinary.com/dufekxhkq/image/upload/v1771918537/27_Oskari_Laaksonen_01_1_d5bqsz.jpg",
+          "stats": []
+        },
+        {
+          "id": "shl-1771918621718",
+          "active": false,
+          "name": "Oscar Engsund",
+          "team": "Sverige",
+          "position": "D",
+          "number": 32,
+          "imageUrl": "https://res.cloudinary.com/dufekxhkq/image/upload/v1771918537/32_Oscar_Engsund_1_vanjra.jpg",
+          "stats": []
+        },
+        {
+          "id": "shl-1771918675162",
+          "active": false,
+          "name": "Eetu Koivistoinen",
+          "team": "Finland",
+          "position": "F",
+          "number": 13,
+          "imageUrl": "https://res.cloudinary.com/dufekxhkq/image/upload/v1771918536/13_Eetu_Koiistoinen_1_sycn9p.jpg",
+          "stats": []
+        },
+        {
+          "id": "shl-1771918693281",
+          "active": false,
+          "name": "Otto Leskinen",
+          "team": "Finland",
+          "position": "D",
+          "number": 82,
+          "imageUrl": "https://res.cloudinary.com/dufekxhkq/image/upload/v1771918535/82_Otto_Leskinen_1_kphbou.jpg",
+          "stats": []
+        },
+        {
+          "id": "shl-1771918710481",
+          "active": false,
+          "name": "Casper Juustovaara",
+          "team": "Sverige",
+          "position": "F",
+          "number": 20,
+          "imageUrl": "https://res.cloudinary.com/dufekxhkq/image/upload/v1771918535/20_Casper_Juustovaara_1_zb4zyd.jpg",
+          "stats": []
+        },
+        {
+          "id": "shl-1771918729560",
+          "active": true,
+          "name": "Pontus Själin",
+          "team": "Sverige",
+          "position": "D",
+          "number": 39,
+          "imageUrl": "https://res.cloudinary.com/dufekxhkq/image/upload/v1771918535/39_Pontus_Sja%CC%88lin_1_kbdbz8.jpg",
+          "stats": []
+        },
+        {
+          "id": "shl-1771918744971",
+          "active": false,
+          "name": "Heiki Liedes",
+          "team": "Finland",
+          "position": "F",
+          "number": 9,
+          "imageUrl": "https://res.cloudinary.com/dufekxhkq/image/upload/v1771918535/09_Heikki_Liedes_1_omisou.jpg",
+          "stats": []
+        },
+        {
+          "id": "shl-1771918758075",
+          "active": false,
+          "name": "Brendan Shinnimin",
+          "team": "Kanada",
+          "position": "F",
+          "number": 24,
+          "imageUrl": "https://res.cloudinary.com/dufekxhkq/image/upload/v1771918533/24_Brendan_Shinnimin_01_usjfuw.jpg",
+          "stats": []
+        },
+        {
+          "id": "shl-1771918770982",
+          "active": false,
+          "name": "Anton Levtchi",
+          "team": "Finland",
+          "position": "F",
+          "number": 76,
+          "imageUrl": "https://res.cloudinary.com/dufekxhkq/image/upload/v1771918532/76_Anton_Levtchi_1_e80le9.jpg",
+          "stats": []
+        },
+        {
+          "id": "shl-1771918783783",
+          "active": false,
+          "name": "Ben Tardif",
+          "team": "Kanada",
+          "position": "F",
+          "number": 72,
+          "imageUrl": "https://res.cloudinary.com/dufekxhkq/image/upload/v1771918532/72_Ben_Tardif_bewvvv.jpg",
+          "stats": []
+        },
+        {
+          "id": "shl-1771918794585",
+          "active": false,
+          "name": "Linus Omark",
+          "team": "Sverige",
+          "position": "F",
+          "number": 67,
+          "imageUrl": "https://res.cloudinary.com/dufekxhkq/image/upload/v1771918532/30_Linus_Omark_01_qqmifx.jpg",
+          "stats": []
+        },
+        {
+          "id": "shl-1771918809599",
+          "active": false,
+          "name": "Pontus Andreasson",
+          "team": "Sverige",
+          "position": "F",
+          "number": 96,
+          "imageUrl": "https://res.cloudinary.com/dufekxhkq/image/upload/v1771918532/96_Pontus_Andreasson_2_zsfyur.jpg",
+          "stats": []
+        },
+        {
+          "id": "shl-1771918821868",
+          "active": false,
+          "name": "Mathias Bromé",
+          "team": "Sverige",
+          "position": "F",
+          "number": 86,
+          "imageUrl": "https://res.cloudinary.com/dufekxhkq/image/upload/v1771918532/86_Mathias_Brome_01_d64rnr.jpg",
+          "stats": []
+        },
+        {
+          "id": "shl-1771918836713",
+          "active": false,
+          "name": "Brian O'Neill",
+          "team": "USA",
+          "position": "F",
+          "number": 91,
+          "imageUrl": "https://res.cloudinary.com/dufekxhkq/image/upload/v1771918531/91_Brian_ONeill_2_qtkhwy.jpg",
+          "stats": []
         }
       ]
     },
     {
-      id: "sdhl",
-      name: "SDHL",
-      players: [
+      "id": "sdhl",
+      "name": "SDHL",
+      "players": [
         {
-          id: "sdhl-1",
-          active: true,
-          number: 12,
-          name: "Sara Holm",
-          country: "SE",
-          position: "F",
-          imageUrl: "https://res.cloudinary.com/dufekxhkq/image/upload/v1758874547/9x16_il2fgk.png",
-          stats: []
+          "id": "sdhl-1",
+          "active": true,
+          "name": "Sara Grahn",
+          "team": "Luleå Hockey",
+          "position": "G",
+          "imageUrl": "https://res.cloudinary.com/dufekxhkq/image/upload/v1771861791/52_Sara_Grahn_1_ma9auv.png",
+          "stats": [
+            {
+              "label": "GP",
+              "value": "5"
+            },
+            {
+              "label": "SV%",
+              "value": ".936"
+            },
+            {
+              "label": "GAA",
+              "value": "1.71"
+            },
+            {
+              "label": "SO",
+              "value": "0"
+            }
+          ],
+          "number": 0
         },
         {
-          id: "sdhl-2",
-          active: true,
-          number: 6,
-          name: "Elsa Bergström",
-          country: "SE",
-          position: "D",
-          imageUrl: "https://res.cloudinary.com/dufekxhkq/image/upload/v1758874547/9x16_il2fgk.png",
-          stats: []
+          "id": "sdhl-2",
+          "active": true,
+          "name": "Petra Nieminen",
+          "team": "Luleå Hockey",
+          "position": "FW",
+          "imageUrl": "https://res.cloudinary.com/dufekxhkq/image/upload/v1771861790/16_Petra_Nieminen_1_qa4qwp.png",
+          "stats": [
+            {
+              "label": "GP",
+              "value": "7"
+            },
+            {
+              "label": "G",
+              "value": "2"
+            },
+            {
+              "label": "A",
+              "value": "7"
+            },
+            {
+              "label": "BLK",
+              "value": "12"
+            }
+          ],
+          "number": 0
         },
         {
-          id: "sdhl-3",
-          active: true,
-          number: 30,
-          name: "Ida Nilsson",
-          country: "SE",
-          position: "G",
-          imageUrl: "https://res.cloudinary.com/dufekxhkq/image/upload/v1758874547/9x16_il2fgk.png",
-          stats: []
+          "id": "sdhl-3",
+          "active": true,
+          "name": "Linnea Johansson",
+          "team": "Luleå Hockey",
+          "position": "FW",
+          "imageUrl": "https://res.cloudinary.com/dufekxhkq/image/upload/v1771861791/77_Linnea_Johansson_1_ojd5vz.png",
+          "stats": [
+            {
+              "label": "GP",
+              "value": "7"
+            },
+            {
+              "label": "G",
+              "value": "4"
+            },
+            {
+              "label": "A",
+              "value": "5"
+            },
+            {
+              "label": "SOG",
+              "value": "15"
+            }
+          ],
+          "number": 0
+        },
+        {
+          "id": "sdhl-1771919423667",
+          "active": true,
+          "name": "Erica Rieder",
+          "team": "Kanada",
+          "position": "D",
+          "number": 17,
+          "imageUrl": "https://res.cloudinary.com/dufekxhkq/image/upload/v1771919362/17_Erica_Rieder_2_yrzdju.jpg",
+          "stats": []
+        },
+        {
+          "id": "sdhl-1771919440314",
+          "active": true,
+          "name": "Jenni Hiirikoski",
+          "team": "Finland",
+          "position": "D",
+          "number": 6,
+          "imageUrl": "https://res.cloudinary.com/dufekxhkq/image/upload/v1771919362/06_Jenni_Hiirikoski_1_tyktah.jpg",
+          "stats": []
+        },
+        {
+          "id": "sdhl-1771919459621",
+          "active": true,
+          "name": "Charlii Kettyle",
+          "team": "Kanada",
+          "position": "D",
+          "number": 23,
+          "imageUrl": "https://res.cloudinary.com/dufekxhkq/image/upload/v1771919361/23_Charli_Kettyle_1_kpbgik.jpg",
+          "stats": []
+        },
+        {
+          "id": "sdhl-1771919508602",
+          "active": true,
+          "name": "Hedvig Sturk",
+          "team": "Sverige",
+          "position": "D",
+          "number": 8,
+          "imageUrl": "https://res.cloudinary.com/dufekxhkq/image/upload/v1771919360/08_Hedvig_Sturk_2_mzdacr.jpg",
+          "stats": []
+        },
+        {
+          "id": "sdhl-1771919546889",
+          "active": true,
+          "name": "Jenna Donohue",
+          "team": "USA",
+          "position": "F",
+          "number": 13,
+          "imageUrl": "https://res.cloudinary.com/dufekxhkq/image/upload/v1771919358/13_Jenna_Donohue_2_tqedrk.jpg",
+          "stats": []
+        },
+        {
+          "id": "sdhl-1771919563497",
+          "active": true,
+          "name": "Lovisa Lundström",
+          "team": "Sverige",
+          "position": "G",
+          "number": 95,
+          "imageUrl": "https://res.cloudinary.com/dufekxhkq/image/upload/v1771919359/95_Lovisa_Lundstro%CC%88m_2_foraev.jpg",
+          "stats": []
+        },
+        {
+          "id": "sdhl-1771919576705",
+          "active": true,
+          "name": "Nadia Mattivi",
+          "team": "Italien",
+          "position": "D",
+          "number": 93,
+          "imageUrl": "https://res.cloudinary.com/dufekxhkq/image/upload/v1771919358/93_Nadia_Mattivi_2_n1pv7s.jpg",
+          "stats": []
+        },
+        {
+          "id": "sdhl-1771919589909",
+          "active": true,
+          "name": "Tilde Sjödin",
+          "team": "Sverige",
+          "position": "D",
+          "number": 7,
+          "imageUrl": "https://res.cloudinary.com/dufekxhkq/image/upload/v1771919357/07_Tilde_Sjo%CC%88din_2_rtf2yk.jpg",
+          "stats": []
+        },
+        {
+          "id": "sdhl-1771919604423",
+          "active": true,
+          "name": "Sarah Bujold",
+          "team": "Kanada",
+          "position": "F",
+          "number": 62,
+          "imageUrl": "https://res.cloudinary.com/dufekxhkq/image/upload/v1771919355/62_Sarah_Bujold_2_c1wdpp.jpg",
+          "stats": []
+        },
+        {
+          "id": "sdhl-1771919622450",
+          "active": true,
+          "name": "Johanna Fällman",
+          "team": "Sverige",
+          "position": "D",
+          "number": 5,
+          "imageUrl": "https://res.cloudinary.com/dufekxhkq/image/upload/v1771919356/05_Johanna_Fa%CC%88llman_2_njd3iy.jpg",
+          "stats": []
+        },
+        {
+          "id": "sdhl-1771919634225",
+          "active": true,
+          "name": "Mimmi Gill",
+          "team": "Sverige",
+          "position": "F",
+          "number": 24,
+          "imageUrl": "https://res.cloudinary.com/dufekxhkq/image/upload/v1771919354/24_Mimmi_Gill_2_jecgr9.jpg",
+          "stats": []
+        },
+        {
+          "id": "sdhl-1771919646241",
+          "active": true,
+          "name": "Jaycee Magwood",
+          "team": "Kanada",
+          "position": "F",
+          "number": 27,
+          "imageUrl": "https://res.cloudinary.com/dufekxhkq/image/upload/v1771919354/27_Jaycee_Magwood_2_tbebci.jpg",
+          "stats": []
+        },
+        {
+          "id": "sdhl-1771919661066",
+          "active": true,
+          "name": "Emelie Kruse",
+          "team": "Norge",
+          "position": "F",
+          "number": 15,
+          "imageUrl": "https://res.cloudinary.com/dufekxhkq/image/upload/v1771919354/15_Emilie_Kruse_1_cesal3.jpg",
+          "stats": []
+        },
+        {
+          "id": "sdhl-1771919676678",
+          "active": true,
+          "name": "Inez Nygren",
+          "team": "Sverige",
+          "position": "F",
+          "number": 39,
+          "imageUrl": "https://res.cloudinary.com/dufekxhkq/image/upload/v1771919354/39_Inez_Nygren_2_kblvmb.jpg",
+          "stats": []
+        },
+        {
+          "id": "sdhl-1771919696891",
+          "active": true,
+          "name": "Wilma Sjölund",
+          "team": "Sverige",
+          "position": "F",
+          "number": 14,
+          "imageUrl": "https://res.cloudinary.com/dufekxhkq/image/upload/v1771919353/14_Wilma_Sjo%CC%88lund_2_qzrpig.jpg",
+          "stats": []
+        },
+        {
+          "id": "sdhl-1771919707122",
+          "active": true,
+          "name": "Akane Shiga",
+          "team": "Japan",
+          "position": "F",
+          "number": 11,
+          "imageUrl": "https://res.cloudinary.com/dufekxhkq/image/upload/v1771919353/11_Akane_Shiga_02_ftlq3h.jpg",
+          "stats": []
         }
       ]
     }
-  ]
+  ],
+  "settings": {
+    "votingClosed": false
+  }
 };
 
 const state = {
@@ -157,7 +558,7 @@ function normalizePlayerDefaults() {
       changed = true;
     }
     league.players.forEach((player) => {
-      if (typeof player.active === "undefined") {
+      if (player.active !== true) {
         player.active = true;
         changed = true;
       }
@@ -202,7 +603,9 @@ function normalizeCountry(value) {
     SWITZERLAND: "CH",
     ITALIEN: "IT",
     ITALY: "IT",
-    JAPAN: "JP"
+    JAPAN: "JP",
+    NORGE: "NO",
+    NORWAY: "NO"
   };
   const raw = String(value || "").trim().toUpperCase();
   if (!raw) return "";
@@ -220,7 +623,8 @@ function countryLabel(iso) {
     SK: "Slovakien",
     CH: "Schweiz",
     IT: "Italien",
-    JP: "Japan"
+    JP: "Japan",
+    NO: "Norge"
   };
   return labels[iso] || "Okänt land";
 }
@@ -242,16 +646,6 @@ function getSupabaseConfig() {
   const url = window.SUPABASE_URL || urlMeta || "";
   const anonKey = window.SUPABASE_ANON_KEY || keyMeta || "";
   return { url, anonKey };
-}
-
-
-function formatSupabaseError(error, fallback = "okänt fel") {
-  if (!error) return fallback;
-  const message = String(error.message || "").trim();
-  const details = String(error.details || "").trim();
-  const hint = String(error.hint || "").trim();
-  const code = String(error.code || "").trim();
-  return [message, details, hint, code && `(kod: ${code})`].filter(Boolean).join(" | ") || fallback;
 }
 
 
