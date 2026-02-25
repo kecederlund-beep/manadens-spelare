@@ -1327,21 +1327,35 @@ async function renderResults() {
     return;
   }
 
-  console.log("RPC get_vote_results starting");
-  const { data, error } = await state.auth.client.rpc("get_vote_results", {
-    p_month_id: state.activeMonthId
-  });
-  console.log("RPC data:", data);
-  console.log("RPC error:", error);
+  const rpcCandidates = [
+    { name: "get_vote_results", args: { p_month_id: state.activeMonthId } },
+    { name: "get_vote_results_public", args: {} }
+  ];
+  let data = null;
+  let error = null;
+  let rpcUsed = null;
+
+  for (const rpc of rpcCandidates) {
+    rpcUsed = rpc.name;
+    console.log("RPC starting", { rpc: rpc.name, args: rpc.args });
+    const response = await state.auth.client.rpc(rpc.name, rpc.args);
+    data = response.data;
+    error = response.error;
+    console.log("RPC data:", { rpc: rpc.name, data });
+    console.log("RPC error:", { rpc: rpc.name, error });
+
+    if (!error) break;
+    if (error.code !== "404" && !String(error.message || "").includes("404")) break;
+  }
 
   if (error) {
     grid.innerHTML = '<p class="results-fallback">Kunde inte hämta resultat just nu.</p>';
-    console.log("Results render done", { reason: "fetch_error" });
+    console.log("Results render done", { reason: "fetch_error", rpc: rpcUsed });
     return;
   }
 
   const rows = Array.isArray(data) ? data : [];
-  console.log("results rows shape", { isArray: Array.isArray(data), length: rows.length });
+  console.log("results rows shape", { rpc: rpcUsed, isArray: Array.isArray(data), rowCount: rows.length });
 
   if (rows.length === 0) {
     grid.innerHTML = '<p class="results-fallback">Inga röster ännu.</p>';
