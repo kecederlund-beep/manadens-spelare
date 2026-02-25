@@ -97,7 +97,8 @@ const state = {
     client: null
   },
   activeMonthId: toMonthId(new Date()),
-  remoteVotingClosed: false
+  remoteVotingClosed: false,
+  submitInProgress: false
 };
 
 normalizePlayerDefaults();
@@ -213,6 +214,29 @@ function getSupabaseConfig() {
   const url = window.SUPABASE_URL || urlMeta || "";
   const anonKey = window.SUPABASE_ANON_KEY || keyMeta || "";
   return { url, anonKey };
+}
+
+
+function formatSupabaseError(error, fallback = "okänt fel") {
+  if (!error) return fallback;
+  const message = String(error.message || "").trim();
+  const details = String(error.details || "").trim();
+  const hint = String(error.hint || "").trim();
+  const code = String(error.code || "").trim();
+  return [message, details, hint, code && `(kod: ${code})`].filter(Boolean).join(" | ") || fallback;
+function getAuthRedirectUrl() {
+  const current = new URL(window.location.href);
+  current.hash = "";
+  current.search = "";
+  return current.toString();
+}
+
+function isProfileComplete(profile) {
+  if (!profile) return false;
+  return PROFILE_REQUIRED_FIELDS.every((field) => {
+    const value = profile[field];
+    return value !== null && value !== undefined && String(value).trim() !== "";
+  });
 }
 
 
@@ -472,6 +496,27 @@ function handleForm() {
   }
 }
 
+
+function setModalVisible(id, visible) {
+  const modal = document.getElementById(id);
+  if (!modal) return;
+  modal.hidden = !visible;
+  modal.style.display = visible ? "" : "none";
+}
+
+function hideAuthModals() {
+  setModalVisible("login-modal", false);
+  setModalVisible("profile-modal", false);
+}
+
+function openLoginModal() {
+  setModalVisible("login-modal", true);
+}
+
+function closeLoginModal() {
+  setModalVisible("login-modal", false);
+}
+
 async function initSupabaseAuth() {
   const { url, anonKey } = getSupabaseConfig();
   if (!url || !anonKey || !window.supabase?.createClient) {
@@ -480,12 +525,38 @@ async function initSupabaseAuth() {
   }
 
 state.auth.client = window.supabase.createClient(url, anonKey);
+  state.auth.client = window.supabase.createClient(url, anonKey);
   await loadRemoteSettings();
   renderAll();
 }
 
 function renderAuthState() {
   // Auth är borttaget i public vote-läget.
+}
+
+async function loadProfile() {
+  return;
+}
+
+function fillVoteFormFromProfile() {
+  return;
+}
+
+function maybeShowProfileModal() {
+  return false;
+}
+
+function renderAuthState() {
+  const banner = document.getElementById("auth-banner");
+  const bannerText = document.getElementById("auth-banner-text");
+  const openLogin = document.getElementById("open-login");
+  const logoutUser = document.getElementById("logout-user");
+
+  banner.hidden = false;
+  bannerText.textContent = "Ingen inloggning krävs just nu. En e-postadress kan bara rösta en gång per månad.";
+  openLogin.hidden = true;
+  logoutUser.hidden = true;
+  updateSubmitState();
 }
 
 async function loadRemoteSettings() {
@@ -523,6 +594,51 @@ async function submitVotes(payload) {
     p_shl_player_id: payload.shl,
     p_sdhl_player_id: payload.sdhl
   });
+  const monthId = state.activeMonthId || toMonthId(new Date());
+
+  const existingVote = await state.auth.client
+    .from("votes")
+    .select("league_id", { head: false })
+    .eq("user_id", state.auth.user.id)
+    .eq("month_id", monthId)
+    .limit(1);
+
+  if (existingVote.error) {
+    const reason = formatSupabaseError(existingVote.error);
+    return {
+      ok: false,
+      message: `Kunde inte kontrollera tidigare röst: ${reason}`
+    };
+  }
+
+  if (Array.isArray(existingVote.data) && existingVote.data.length > 0) {
+    return { ok: false, message: "Du har redan röstat den här månaden." };
+  }
+
+  const rows = [
+    {
+      league_id: "shl",
+      player_id: payload.shl,
+      month_id: monthId,
+      email,
+      first_name: payload.firstName,
+      last_name: payload.lastName,
+      phone: payload.phone,
+      marketing_consent: payload.marketingConsent,
+      created_at: payload.createdAt
+    },
+    {
+      league_id: "sdhl",
+      player_id: payload.sdhl,
+      month_id: monthId,
+      email,
+      first_name: payload.firstName,
+      last_name: payload.lastName,
+      phone: payload.phone,
+      marketing_consent: payload.marketingConsent,
+      created_at: payload.createdAt
+    }
+  ];
 
   if (error) {
     if (error.code === "42501") {
@@ -539,12 +655,21 @@ async function submitVotes(payload) {
   if (status !== "ok") {
     return { ok: false, message: "Oväntat svar från databasen vid röstning." };
   }
+    if (error.code === "23505") {
+      return { ok: false, message: "Den här e-postadressen har redan röstat denna månad." };
+    }
+    if (error.code === "42501") {
+      return { ok: false, message: "Databasen nekar skrivning (RLS/policy). Kontrollera INSERT-policy för votes." };
+    }
+    return { ok: false, message: `Kunde inte spara röst: ${formatSupabaseError(error)}` };
+  }
 
   return { ok: true };
 }
 
 function setupAuthHandlers() {
   // Login är avstängt i detta läge.
+  // Inloggning används inte i förenklat läge.
 }
 
 function openAdmin() {
@@ -832,6 +957,7 @@ function triggerConfetti() {
 }
 
 async function init() {
+  hideAuthModals();
   renderAll();
   attachCardListeners();
   handleForm();
