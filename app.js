@@ -498,7 +498,8 @@ const state = {
     client: null
   },
   activeMonthId: toMonthId(new Date()),
-  remoteVotingClosed: false
+  remoteVotingClosed: false,
+  submitInProgress: false
 };
 
 normalizePlayerDefaults();
@@ -1267,6 +1268,7 @@ function triggerConfetti() {
 }
 
 async function init() {
+  hideAuthModals();
   renderAll();
   attachCardListeners();
   handleForm();
