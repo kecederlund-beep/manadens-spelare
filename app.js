@@ -232,6 +232,16 @@ function isProfileComplete(profile) {
   });
 }
 
+
+function formatSupabaseError(error, fallback = "okänt fel") {
+  if (!error) return fallback;
+  const message = String(error.message || "").trim();
+  const details = String(error.details || "").trim();
+  const hint = String(error.hint || "").trim();
+  const code = String(error.code || "").trim();
+  return [message, details, hint, code && `(kod: ${code})`].filter(Boolean).join(" | ") || fallback;
+}
+
 function isVotingClosed() {
   return Boolean(state.data.settings.votingClosed || state.remoteVotingClosed);
 }
@@ -565,23 +575,24 @@ async function submitVotes(payload) {
   }
 
   const monthId = state.activeMonthId || toMonthId(new Date());
-  const email = payload.email.toLowerCase();
 
-  const existing = await state.auth.client
+  const existingVote = await state.auth.client
     .from("votes")
-    .select("id", { count: "exact", head: true })
+    .select("league_id", { head: false })
+    .eq("user_id", state.auth.user.id)
     .eq("month_id", monthId)
-    .ilike("email", email);
+    .limit(1);
 
-  if (existing.error) {
-    if (String(existing.error.message || "").toLowerCase().includes("email")) {
-      return { ok: false, message: "Databasen saknar kolumnen 'email' i votes. Lägg till den i Supabase för att kunna stoppa dubbelröster." };
-    }
-    return { ok: false, message: `Kunde inte kontrollera tidigare röst: ${existing.error.message || "okänt fel"}` };
+  if (existingVote.error) {
+    const reason = formatSupabaseError(existingVote.error);
+    return {
+      ok: false,
+      message: `Kunde inte kontrollera tidigare röst: ${reason}`
+    };
   }
 
-  if ((existing.count || 0) > 0) {
-    return { ok: false, message: "Den här e-postadressen har redan röstat denna månad." };
+  if (Array.isArray(existingVote.data) && existingVote.data.length > 0) {
+    return { ok: false, message: "Du har redan röstat den här månaden." };
   }
 
   const rows = [
@@ -614,7 +625,10 @@ async function submitVotes(payload) {
     if (error.code === "23505") {
       return { ok: false, message: "Den här e-postadressen har redan röstat denna månad." };
     }
-    return { ok: false, message: `Kunde inte spara röst: ${error.message || "okänt fel"}` };
+    if (error.code === "42501") {
+      return { ok: false, message: "Databasen nekar skrivning (RLS/policy). Kontrollera INSERT-policy för votes." };
+    }
+    return { ok: false, message: `Kunde inte spara röst: ${formatSupabaseError(error)}` };
   }
 
   return { ok: true };
