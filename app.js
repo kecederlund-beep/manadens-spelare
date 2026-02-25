@@ -501,7 +501,8 @@ const state = {
     client: null
   },
   activeMonthId: toMonthId(new Date()),
-  remoteVotingClosed: false
+  remoteVotingClosed: false,
+  submitInProgress: false
 };
 
 normalizePlayerDefaults();
@@ -1089,12 +1090,17 @@ function openAdmin() {
   const password = prompt("Admin-lösenord");
   if (password === ADMIN_PASSWORD) {
     sessionStorage.setItem(ADMIN_SESSION_KEY, "true");
-    panel.hidden = false;
     showToast("Adminläge aktiverat.");
-    renderAdmin();
-  } else if (password) {
-    showToast("Fel lösenord.");
   }
+  panel.hidden = false;
+  try {
+    renderAdmin();
+  } catch (err) {
+    console.error("Admin render failed", err);
+    showToast("Kunde inte öppna adminpanelen.");
+  }
+  panel.hidden = false;
+  renderAdmin();
 }
 
 function logoutAdmin() {
