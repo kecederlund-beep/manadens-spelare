@@ -103,6 +103,13 @@ a {
   padding: 14px 0 0;
   display: grid;
   gap: 18px;
+  justify-items: center;
+  text-align: center;
+}
+
+.top > * {
+  width: 100%;
+  margin-inline: auto;
 }
 
 .banner {
@@ -125,8 +132,11 @@ a {
 .sponsor {
   display: grid;
   justify-items: center;
+  align-items: center;
   gap: 4px;
   padding: 8px 0 20px;
+  margin-inline: auto;
+  text-align: center;
 }
 
 .sponsor-logo {
@@ -231,6 +241,7 @@ a {
 .cards {
   display: grid;
   gap: 10px;
+  min-height: clamp(320px, 56vh, 620px);
 }
 
 .voting-closed {
@@ -490,6 +501,49 @@ button.ghost {
   transform: translateY(0);
 }
 
+
+.vote.missing-selection .section-head {
+  outline: 2px solid rgba(255, 213, 74, 0.85);
+  border-radius: var(--radius-sm);
+  padding: 8px 10px;
+  background: rgba(255, 213, 74, 0.08);
+}
+
+.feedback-overlay {
+  position: fixed;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  background: rgba(7, 3, 4, 0.62);
+  backdrop-filter: blur(2px);
+  -webkit-backdrop-filter: blur(2px);
+  z-index: 40;
+  padding: 16px;
+}
+
+.feedback-modal {
+  width: min(430px, 100%);
+  background: rgba(20, 6, 10, 0.94);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-soft);
+  padding: 16px 18px;
+  text-align: center;
+}
+
+.feedback-modal p {
+  margin: 0;
+  font-size: 1rem;
+  letter-spacing: 0.03em;
+}
+
+
+.results-fallback {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: 0.94rem;
+}
+
 .modal-backdrop {
   position: fixed;
   inset: 0;
@@ -622,6 +676,14 @@ label.file input {
   grid-template-columns: auto 1fr;
   align-items: center;
   gap: 10px;
+}
+
+
+@media (max-width: 559px) {
+  .welcome-headline {
+    white-space: normal;
+    text-wrap: balance;
+  }
 }
 
 @media (min-width: 560px) {
