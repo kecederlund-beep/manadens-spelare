@@ -3,101 +3,502 @@ const EMAIL_KEY = "msp_email";
 const ADMIN_SESSION_KEY = "msp_admin";
 const RESULTS_UNLOCK_KEY = "msp_results_unlocked";
 const ADMIN_PASSWORD = "shl2026"; // change for production
-const PROFILE_REQUIRED_FIELDS = ["first_name", "last_name", "birth_year", "postal_code"];
+const DEFAULT_DATA_PATH = "data/defaultData.json";
+const DEFAULT_DATA_VERSION = "2026-02-25-lineup-v1";
+const STORAGE_VERSION_KEY = "msp_data_version";
 
 const defaultData = {
-  sponsor: {
-    name: "Ductus",
-    logoUrl: "https://res.cloudinary.com/dufekxhkq/image/upload/v1758878747/banner_omro%CC%88stning_vit_tmguie.png",
-    linkUrl: "https://example.com"
+  "sponsor": {
+    "name": "Ductus",
+    "logoUrl": "https://res.cloudinary.com/dufekxhkq/image/upload/v1771911570/Ductus-logo-white_cyc5no.png",
+    "linkUrl": "https://example.com"
   },
-  bannerUrl: "https://res.cloudinary.com/dufekxhkq/image/upload/v1758878747/banner_omro%CC%88stning_vit_tmguie.png",
-  settings: {
-    votingClosed: false
-  },
-  leagues: [
+  "bannerUrl": "https://res.cloudinary.com/dufekxhkq/image/upload/v1758878747/banner_omro%CC%88stning_vit_tmguie.png",
+  "leagues": [
     {
-      id: "shl",
-      name: "SHL",
-      players: [
+      "id": "shl",
+      "name": "SHL",
+      "players": [
         {
-          id: "shl-1",
-          active: true,
-          number: 28,
-          name: "Erik Lund",
-          country: "SE",
-          position: "F",
-          imageUrl: "https://res.cloudinary.com/dufekxhkq/image/upload/v1758874547/9x16_il2fgk.png",
-          stats: []
+          "id": "shl-1",
+          "active": true,
+          "name": "Markus Nurmi",
+          "team": "Finland",
+          "position": "F",
+          "number": 51,
+          "imageUrl": "https://res.cloudinary.com/dufekxhkq/image/upload/v1771862012/51_Markus_Nurmi_3_bbdftx.png",
+          "stats": []
         },
         {
-          id: "shl-2",
-          active: true,
-          number: 19,
-          name: "Mikael Sjödin",
-          country: "SE",
-          position: "F",
-          imageUrl: "https://res.cloudinary.com/dufekxhkq/image/upload/v1758874547/9x16_il2fgk.png",
-          stats: []
+          "id": "shl-2",
+          "active": true,
+          "name": "Isac Hedqvist",
+          "team": "Sverige",
+          "position": "F",
+          "number": 6,
+          "imageUrl": "https://res.cloudinary.com/dufekxhkq/image/upload/v1771862012/06_Isac_Hedqvist_4_htn9a5.png",
+          "stats": []
         },
         {
-          id: "shl-3",
-          active: true,
-          number: 1,
-          name: "Anton Berg",
-          country: "SE",
-          position: "G",
-          imageUrl: "https://res.cloudinary.com/dufekxhkq/image/upload/v1758874547/9x16_il2fgk.png",
-          stats: []
+          "id": "shl-3",
+          "active": true,
+          "name": "Filip Eriksson",
+          "team": "Sverige",
+          "position": "F",
+          "number": 25,
+          "imageUrl": "https://res.cloudinary.com/dufekxhkq/image/upload/v1771862011/23_Filip_Eriksson_3_dkxdv3.png",
+          "stats": []
+        },
+        {
+          "id": "shl-1771917318978",
+          "active": true,
+          "name": "Joel Lassinantti",
+          "team": "Sverige",
+          "position": "G",
+          "number": 34,
+          "imageUrl": "https://res.cloudinary.com/dufekxhkq/image/upload/v1771917312/34_Joel_Lassinantti_1_qixvyh.png",
+          "stats": []
+        },
+        {
+          "id": "shl-1771917335335",
+          "active": true,
+          "name": "Erik Gustafsson",
+          "team": "Sverige",
+          "position": "D",
+          "number": 29,
+          "imageUrl": "https://res.cloudinary.com/dufekxhkq/image/upload/v1771917315/29_Erik_Gustafsson_2_zrfnzn.png",
+          "stats": []
+        },
+        {
+          "id": "shl-1771918557123",
+          "active": true,
+          "name": "Matteus Ward",
+          "team": "Sverige",
+          "position": "G",
+          "number": 1,
+          "imageUrl": "https://res.cloudinary.com/dufekxhkq/image/upload/v1771918538/31_Matteus_Ward_1_vcnkie.jpg",
+          "stats": []
+        },
+        {
+          "id": "shl-1771918571532",
+          "active": true,
+          "name": "Jesper Sellgren",
+          "team": "Sverige",
+          "position": "D",
+          "number": 23,
+          "imageUrl": "https://res.cloudinary.com/dufekxhkq/image/upload/v1771918539/23_Jesper_Sellgren_1_r4nuii.jpg",
+          "stats": []
+        },
+        {
+          "id": "shl-1771918585699",
+          "active": true,
+          "name": "Frederic Allard",
+          "team": "Kanada",
+          "position": "D",
+          "number": 3,
+          "imageUrl": "https://res.cloudinary.com/dufekxhkq/image/upload/v1771918538/03_Frederic_Allard_1_or2yul.jpg",
+          "stats": []
+        },
+        {
+          "id": "shl-1771918610087",
+          "active": true,
+          "name": "Oskari Laaksonen",
+          "team": "Finland",
+          "position": "D",
+          "number": 27,
+          "imageUrl": "https://res.cloudinary.com/dufekxhkq/image/upload/v1771918537/27_Oskari_Laaksonen_01_1_d5bqsz.jpg",
+          "stats": []
+        },
+        {
+          "id": "shl-1771918621718",
+          "active": false,
+          "name": "Oscar Engsund",
+          "team": "Sverige",
+          "position": "D",
+          "number": 32,
+          "imageUrl": "https://res.cloudinary.com/dufekxhkq/image/upload/v1771918537/32_Oscar_Engsund_1_vanjra.jpg",
+          "stats": []
+        },
+        {
+          "id": "shl-1771918675162",
+          "active": false,
+          "name": "Eetu Koivistoinen",
+          "team": "Finland",
+          "position": "F",
+          "number": 13,
+          "imageUrl": "https://res.cloudinary.com/dufekxhkq/image/upload/v1771918536/13_Eetu_Koiistoinen_1_sycn9p.jpg",
+          "stats": []
+        },
+        {
+          "id": "shl-1771918693281",
+          "active": false,
+          "name": "Otto Leskinen",
+          "team": "Finland",
+          "position": "D",
+          "number": 82,
+          "imageUrl": "https://res.cloudinary.com/dufekxhkq/image/upload/v1771918535/82_Otto_Leskinen_1_kphbou.jpg",
+          "stats": []
+        },
+        {
+          "id": "shl-1771918710481",
+          "active": false,
+          "name": "Casper Juustovaara",
+          "team": "Sverige",
+          "position": "F",
+          "number": 20,
+          "imageUrl": "https://res.cloudinary.com/dufekxhkq/image/upload/v1771918535/20_Casper_Juustovaara_1_zb4zyd.jpg",
+          "stats": []
+        },
+        {
+          "id": "shl-1771918729560",
+          "active": true,
+          "name": "Pontus Själin",
+          "team": "Sverige",
+          "position": "D",
+          "number": 39,
+          "imageUrl": "https://res.cloudinary.com/dufekxhkq/image/upload/v1771918535/39_Pontus_Sja%CC%88lin_1_kbdbz8.jpg",
+          "stats": []
+        },
+        {
+          "id": "shl-1771918744971",
+          "active": false,
+          "name": "Heiki Liedes",
+          "team": "Finland",
+          "position": "F",
+          "number": 9,
+          "imageUrl": "https://res.cloudinary.com/dufekxhkq/image/upload/v1771918535/09_Heikki_Liedes_1_omisou.jpg",
+          "stats": []
+        },
+        {
+          "id": "shl-1771918758075",
+          "active": false,
+          "name": "Brendan Shinnimin",
+          "team": "Kanada",
+          "position": "F",
+          "number": 24,
+          "imageUrl": "https://res.cloudinary.com/dufekxhkq/image/upload/v1771918533/24_Brendan_Shinnimin_01_usjfuw.jpg",
+          "stats": []
+        },
+        {
+          "id": "shl-1771918770982",
+          "active": false,
+          "name": "Anton Levtchi",
+          "team": "Finland",
+          "position": "F",
+          "number": 76,
+          "imageUrl": "https://res.cloudinary.com/dufekxhkq/image/upload/v1771918532/76_Anton_Levtchi_1_e80le9.jpg",
+          "stats": []
+        },
+        {
+          "id": "shl-1771918783783",
+          "active": false,
+          "name": "Ben Tardif",
+          "team": "Kanada",
+          "position": "F",
+          "number": 72,
+          "imageUrl": "https://res.cloudinary.com/dufekxhkq/image/upload/v1771918532/72_Ben_Tardif_bewvvv.jpg",
+          "stats": []
+        },
+        {
+          "id": "shl-1771918794585",
+          "active": false,
+          "name": "Linus Omark",
+          "team": "Sverige",
+          "position": "F",
+          "number": 67,
+          "imageUrl": "https://res.cloudinary.com/dufekxhkq/image/upload/v1771918532/30_Linus_Omark_01_qqmifx.jpg",
+          "stats": []
+        },
+        {
+          "id": "shl-1771918809599",
+          "active": false,
+          "name": "Pontus Andreasson",
+          "team": "Sverige",
+          "position": "F",
+          "number": 96,
+          "imageUrl": "https://res.cloudinary.com/dufekxhkq/image/upload/v1771918532/96_Pontus_Andreasson_2_zsfyur.jpg",
+          "stats": []
+        },
+        {
+          "id": "shl-1771918821868",
+          "active": false,
+          "name": "Mathias Bromé",
+          "team": "Sverige",
+          "position": "F",
+          "number": 86,
+          "imageUrl": "https://res.cloudinary.com/dufekxhkq/image/upload/v1771918532/86_Mathias_Brome_01_d64rnr.jpg",
+          "stats": []
+        },
+        {
+          "id": "shl-1771918836713",
+          "active": false,
+          "name": "Brian O'Neill",
+          "team": "USA",
+          "position": "F",
+          "number": 91,
+          "imageUrl": "https://res.cloudinary.com/dufekxhkq/image/upload/v1771918531/91_Brian_ONeill_2_qtkhwy.jpg",
+          "stats": []
         }
       ]
     },
     {
-      id: "sdhl",
-      name: "SDHL",
-      players: [
+      "id": "sdhl",
+      "name": "SDHL",
+      "players": [
         {
-          id: "sdhl-1",
-          active: true,
-          number: 12,
-          name: "Sara Holm",
-          country: "SE",
-          position: "F",
-          imageUrl: "https://res.cloudinary.com/dufekxhkq/image/upload/v1758874547/9x16_il2fgk.png",
-          stats: []
+          "id": "sdhl-1",
+          "active": true,
+          "name": "Sara Grahn",
+          "team": "Luleå Hockey",
+          "position": "G",
+          "imageUrl": "https://res.cloudinary.com/dufekxhkq/image/upload/v1771861791/52_Sara_Grahn_1_ma9auv.png",
+          "stats": [
+            {
+              "label": "GP",
+              "value": "5"
+            },
+            {
+              "label": "SV%",
+              "value": ".936"
+            },
+            {
+              "label": "GAA",
+              "value": "1.71"
+            },
+            {
+              "label": "SO",
+              "value": "0"
+            }
+          ],
+          "number": 0
         },
         {
-          id: "sdhl-2",
-          active: true,
-          number: 6,
-          name: "Elsa Bergström",
-          country: "SE",
-          position: "D",
-          imageUrl: "https://res.cloudinary.com/dufekxhkq/image/upload/v1758874547/9x16_il2fgk.png",
-          stats: []
+          "id": "sdhl-2",
+          "active": true,
+          "name": "Petra Nieminen",
+          "team": "Luleå Hockey",
+          "position": "FW",
+          "imageUrl": "https://res.cloudinary.com/dufekxhkq/image/upload/v1771861790/16_Petra_Nieminen_1_qa4qwp.png",
+          "stats": [
+            {
+              "label": "GP",
+              "value": "7"
+            },
+            {
+              "label": "G",
+              "value": "2"
+            },
+            {
+              "label": "A",
+              "value": "7"
+            },
+            {
+              "label": "BLK",
+              "value": "12"
+            }
+          ],
+          "number": 0
         },
         {
-          id: "sdhl-3",
-          active: true,
-          number: 30,
-          name: "Ida Nilsson",
-          country: "SE",
-          position: "G",
-          imageUrl: "https://res.cloudinary.com/dufekxhkq/image/upload/v1758874547/9x16_il2fgk.png",
-          stats: []
+          "id": "sdhl-3",
+          "active": true,
+          "name": "Linnea Johansson",
+          "team": "Luleå Hockey",
+          "position": "FW",
+          "imageUrl": "https://res.cloudinary.com/dufekxhkq/image/upload/v1771861791/77_Linnea_Johansson_1_ojd5vz.png",
+          "stats": [
+            {
+              "label": "GP",
+              "value": "7"
+            },
+            {
+              "label": "G",
+              "value": "4"
+            },
+            {
+              "label": "A",
+              "value": "5"
+            },
+            {
+              "label": "SOG",
+              "value": "15"
+            }
+          ],
+          "number": 0
+        },
+        {
+          "id": "sdhl-1771919423667",
+          "active": true,
+          "name": "Erica Rieder",
+          "team": "Kanada",
+          "position": "D",
+          "number": 17,
+          "imageUrl": "https://res.cloudinary.com/dufekxhkq/image/upload/v1771919362/17_Erica_Rieder_2_yrzdju.jpg",
+          "stats": []
+        },
+        {
+          "id": "sdhl-1771919440314",
+          "active": true,
+          "name": "Jenni Hiirikoski",
+          "team": "Finland",
+          "position": "D",
+          "number": 6,
+          "imageUrl": "https://res.cloudinary.com/dufekxhkq/image/upload/v1771919362/06_Jenni_Hiirikoski_1_tyktah.jpg",
+          "stats": []
+        },
+        {
+          "id": "sdhl-1771919459621",
+          "active": true,
+          "name": "Charlii Kettyle",
+          "team": "Kanada",
+          "position": "D",
+          "number": 23,
+          "imageUrl": "https://res.cloudinary.com/dufekxhkq/image/upload/v1771919361/23_Charli_Kettyle_1_kpbgik.jpg",
+          "stats": []
+        },
+        {
+          "id": "sdhl-1771919508602",
+          "active": true,
+          "name": "Hedvig Sturk",
+          "team": "Sverige",
+          "position": "D",
+          "number": 8,
+          "imageUrl": "https://res.cloudinary.com/dufekxhkq/image/upload/v1771919360/08_Hedvig_Sturk_2_mzdacr.jpg",
+          "stats": []
+        },
+        {
+          "id": "sdhl-1771919546889",
+          "active": true,
+          "name": "Jenna Donohue",
+          "team": "USA",
+          "position": "F",
+          "number": 13,
+          "imageUrl": "https://res.cloudinary.com/dufekxhkq/image/upload/v1771919358/13_Jenna_Donohue_2_tqedrk.jpg",
+          "stats": []
+        },
+        {
+          "id": "sdhl-1771919563497",
+          "active": true,
+          "name": "Lovisa Lundström",
+          "team": "Sverige",
+          "position": "G",
+          "number": 95,
+          "imageUrl": "https://res.cloudinary.com/dufekxhkq/image/upload/v1771919359/95_Lovisa_Lundstro%CC%88m_2_foraev.jpg",
+          "stats": []
+        },
+        {
+          "id": "sdhl-1771919576705",
+          "active": true,
+          "name": "Nadia Mattivi",
+          "team": "Italien",
+          "position": "D",
+          "number": 93,
+          "imageUrl": "https://res.cloudinary.com/dufekxhkq/image/upload/v1771919358/93_Nadia_Mattivi_2_n1pv7s.jpg",
+          "stats": []
+        },
+        {
+          "id": "sdhl-1771919589909",
+          "active": true,
+          "name": "Tilde Sjödin",
+          "team": "Sverige",
+          "position": "D",
+          "number": 7,
+          "imageUrl": "https://res.cloudinary.com/dufekxhkq/image/upload/v1771919357/07_Tilde_Sjo%CC%88din_2_rtf2yk.jpg",
+          "stats": []
+        },
+        {
+          "id": "sdhl-1771919604423",
+          "active": true,
+          "name": "Sarah Bujold",
+          "team": "Kanada",
+          "position": "F",
+          "number": 62,
+          "imageUrl": "https://res.cloudinary.com/dufekxhkq/image/upload/v1771919355/62_Sarah_Bujold_2_c1wdpp.jpg",
+          "stats": []
+        },
+        {
+          "id": "sdhl-1771919622450",
+          "active": true,
+          "name": "Johanna Fällman",
+          "team": "Sverige",
+          "position": "D",
+          "number": 5,
+          "imageUrl": "https://res.cloudinary.com/dufekxhkq/image/upload/v1771919356/05_Johanna_Fa%CC%88llman_2_njd3iy.jpg",
+          "stats": []
+        },
+        {
+          "id": "sdhl-1771919634225",
+          "active": true,
+          "name": "Mimmi Gill",
+          "team": "Sverige",
+          "position": "F",
+          "number": 24,
+          "imageUrl": "https://res.cloudinary.com/dufekxhkq/image/upload/v1771919354/24_Mimmi_Gill_2_jecgr9.jpg",
+          "stats": []
+        },
+        {
+          "id": "sdhl-1771919646241",
+          "active": true,
+          "name": "Jaycee Magwood",
+          "team": "Kanada",
+          "position": "F",
+          "number": 27,
+          "imageUrl": "https://res.cloudinary.com/dufekxhkq/image/upload/v1771919354/27_Jaycee_Magwood_2_tbebci.jpg",
+          "stats": []
+        },
+        {
+          "id": "sdhl-1771919661066",
+          "active": true,
+          "name": "Emelie Kruse",
+          "team": "Norge",
+          "position": "F",
+          "number": 15,
+          "imageUrl": "https://res.cloudinary.com/dufekxhkq/image/upload/v1771919354/15_Emilie_Kruse_1_cesal3.jpg",
+          "stats": []
+        },
+        {
+          "id": "sdhl-1771919676678",
+          "active": true,
+          "name": "Inez Nygren",
+          "team": "Sverige",
+          "position": "F",
+          "number": 39,
+          "imageUrl": "https://res.cloudinary.com/dufekxhkq/image/upload/v1771919354/39_Inez_Nygren_2_kblvmb.jpg",
+          "stats": []
+        },
+        {
+          "id": "sdhl-1771919696891",
+          "active": true,
+          "name": "Wilma Sjölund",
+          "team": "Sverige",
+          "position": "F",
+          "number": 14,
+          "imageUrl": "https://res.cloudinary.com/dufekxhkq/image/upload/v1771919353/14_Wilma_Sjo%CC%88lund_2_qzrpig.jpg",
+          "stats": []
+        },
+        {
+          "id": "sdhl-1771919707122",
+          "active": true,
+          "name": "Akane Shiga",
+          "team": "Japan",
+          "position": "F",
+          "number": 11,
+          "imageUrl": "https://res.cloudinary.com/dufekxhkq/image/upload/v1771919353/11_Akane_Shiga_02_ftlq3h.jpg",
+          "stats": []
         }
       ]
     }
-  ]
+  ],
+  "settings": {
+    "votingClosed": false
+  }
 };
 
 const state = {
   data: loadData(),
   selections: { shl: null, sdhl: null },
   auth: {
-    client: null,
-    user: null,
-    profile: null
+    client: null
   },
   activeMonthId: toMonthId(new Date()),
   remoteVotingClosed: false
@@ -108,9 +509,19 @@ normalizePlayerDefaults();
 function loadData() {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
-    if (raw) return JSON.parse(raw);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (parsed && Array.isArray(parsed.leagues) && parsed.leagues.length > 0) {
+        return parsed;
+      }
+      console.warn("Invalid data override, resetting to defaults");
+      localStorage.removeItem(STORAGE_KEY);
+      localStorage.removeItem(STORAGE_VERSION_KEY);
+    }
   } catch (err) {
     console.warn("Failed to load data override", err);
+    localStorage.removeItem(STORAGE_KEY);
+    localStorage.removeItem(STORAGE_VERSION_KEY);
   }
   return structuredClone(defaultData);
 }
@@ -119,8 +530,48 @@ function saveData() {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(state.data));
 }
 
+function markDataVersion(version = DEFAULT_DATA_VERSION) {
+  localStorage.setItem(STORAGE_VERSION_KEY, version);
+}
+
+async function hydrateDefaultDataFromFile() {
+  const hasLocalOverride = Boolean(localStorage.getItem(STORAGE_KEY));
+  const storedVersion = localStorage.getItem(STORAGE_VERSION_KEY);
+  const shouldHydrate = !hasLocalOverride || storedVersion !== DEFAULT_DATA_VERSION;
+  if (!shouldHydrate) return;
+
+  try {
+    const response = await fetch(DEFAULT_DATA_PATH, { cache: "no-store" });
+    if (!response.ok) return;
+    const data = await response.json();
+    if (!data || !Array.isArray(data.leagues) || data.leagues.length === 0) return;
+    state.data = data;
+    normalizePlayerDefaults();
+    saveData();
+    markDataVersion();
+  } catch (err) {
+    console.warn("Failed to load defaultData.json", err);
+  }
+}
+
 function normalizePlayerDefaults() {
   let changed = false;
+  if (!state.data || typeof state.data !== "object") {
+    state.data = structuredClone(defaultData);
+    changed = true;
+  }
+  if (!Array.isArray(state.data.leagues) || state.data.leagues.length === 0) {
+    state.data.leagues = structuredClone(defaultData.leagues);
+    changed = true;
+  }
+  if (!state.data.sponsor) {
+    state.data.sponsor = structuredClone(defaultData.sponsor);
+    changed = true;
+  }
+  if (!state.data.bannerUrl) {
+    state.data.bannerUrl = defaultData.bannerUrl;
+    changed = true;
+  }
   if (!state.data.settings) {
     state.data.settings = { votingClosed: false };
     changed = true;
@@ -130,8 +581,12 @@ function normalizePlayerDefaults() {
     changed = true;
   }
   state.data.leagues.forEach((league) => {
+    if (!Array.isArray(league.players)) {
+      league.players = [];
+      changed = true;
+    }
     league.players.forEach((player) => {
-      if (typeof player.active === "undefined") {
+      if (player.active !== true) {
         player.active = true;
         changed = true;
       }
@@ -176,7 +631,9 @@ function normalizeCountry(value) {
     SWITZERLAND: "CH",
     ITALIEN: "IT",
     ITALY: "IT",
-    JAPAN: "JP"
+    JAPAN: "JP",
+    NORGE: "NO",
+    NORWAY: "NO"
   };
   const raw = String(value || "").trim().toUpperCase();
   if (!raw) return "";
@@ -194,7 +651,8 @@ function countryLabel(iso) {
     SK: "Slovakien",
     CH: "Schweiz",
     IT: "Italien",
-    JP: "Japan"
+    JP: "Japan",
+    NO: "Norge"
   };
   return labels[iso] || "Okänt land";
 }
@@ -218,12 +676,14 @@ function getSupabaseConfig() {
   return { url, anonKey };
 }
 
-function isProfileComplete(profile) {
-  if (!profile) return false;
-  return PROFILE_REQUIRED_FIELDS.every((field) => {
-    const value = profile[field];
-    return value !== null && value !== undefined && String(value).trim() !== "";
-  });
+
+function formatSupabaseError(error, fallback = "okänt fel") {
+  if (!error) return fallback;
+  const message = String(error.message || "").trim();
+  const details = String(error.details || "").trim();
+  const hint = String(error.hint || "").trim();
+  const code = String(error.code || "").trim();
+  return [message, details, hint, code && `(kod: ${code})`].filter(Boolean).join(" | ") || fallback;
 }
 
 function isVotingClosed() {
@@ -231,11 +691,12 @@ function isVotingClosed() {
 }
 
 function canVoteNow() {
-  return Boolean(state.auth.user && isProfileComplete(state.auth.profile) && !isVotingClosed());
+  return !isVotingClosed();
 }
 
 function resetData() {
   localStorage.removeItem(STORAGE_KEY);
+  localStorage.removeItem(STORAGE_VERSION_KEY);
   state.data = structuredClone(defaultData);
   renderAll();
 }
@@ -263,6 +724,9 @@ function renderSponsor() {
 function renderCards() {
   const order = ["G", "D", "FWD"];
   const labels = { G: "MÅLVAKTER", D: "BACKAR", FWD: "FORWARDS" };
+  if (!Array.isArray(state.data.leagues) || state.data.leagues.length === 0) {
+    return;
+  }
   state.data.leagues.forEach((league) => {
     const container = document.getElementById(`${league.id}-cards`);
     container.innerHTML = "";
@@ -408,13 +872,11 @@ function updateSubmitState() {
   const email = form.elements.email.value.trim();
   const emailValid = /.+@.+\..+/.test(email);
   const hasBothVotes = Boolean(state.selections.shl && state.selections.sdhl);
-  const canSubmit = hasRequired && emailValid && hasBothVotes && !isVotingClosed() && Boolean(state.auth.user);
+  const canSubmit = hasRequired && emailValid && hasBothVotes && !isVotingClosed();
   form.querySelector("#submit").disabled = !canSubmit;
 
   const status = document.getElementById("form-status");
-  if (!state.auth.user) {
-    status.textContent = "Logga in för att rösta.";
-  } else if (isVotingClosed()) {
+  if (isVotingClosed()) {
     status.textContent = "Omröstningen är stängd.";
   } else if (!hasBothVotes) {
     status.textContent = "Välj en spelare i både SDHL och SHL.";
@@ -430,18 +892,17 @@ function handleForm() {
   form.addEventListener("input", updateSubmitState);
   form.addEventListener("submit", async (event) => {
     event.preventDefault();
-    if (!state.auth.user) {
-      showToast("Logga in med e-post först.");
-      openLoginModal();
-      return;
-    }
     if (isVotingClosed()) {
       showToast("Omröstningen är stängd.");
       return;
     }
+    if (!state.selections.shl || !state.selections.sdhl) {
+      showToast("Välj en spelare i vardera serie.");
+      return;
+    }
     updateSubmitState();
     if (form.querySelector("#submit").disabled) {
-      showToast("Fyll i alla obligatoriska fält och välj en spelare i både SDHL och SHL.");
+      showToast("Fyll i alla obligatoriska fält.");
       return;
     }
 
@@ -480,131 +941,24 @@ function handleForm() {
   }
 }
 
-function openLoginModal() {
-  document.getElementById("login-modal").hidden = false;
-}
-
-function closeLoginModal() {
-  document.getElementById("login-modal").hidden = true;
-}
-
 async function initSupabaseAuth() {
   const { url, anonKey } = getSupabaseConfig();
   if (!url || !anonKey || !window.supabase?.createClient) {
     showToast("Supabase saknar konfiguration (SUPABASE_URL/SUPABASE_ANON_KEY).");
-    renderAuthState();
     return;
   }
 
 state.auth.client = window.supabase.createClient(url, anonKey);
-
-// ✅ TESTLOGG (tillfälligt)
-console.log("Supabase client OK:", state.auth.client);
-const { data: userData, error: userErr } = await state.auth.client.auth.getUser();
-console.log("getUser:", userData, userErr);
-
-const { data } = await state.auth.client.auth.getSession();
-state.auth.user = data.session?.user || null;
-
-if (state.auth.user) {
-  await loadProfile();
-}
   await loadRemoteSettings();
-  renderAuthState();
   renderAll();
-
-  state.auth.client.auth.onAuthStateChange(async (_event, session) => {
-    state.auth.user = session?.user || null;
-    state.auth.profile = null;
-    if (state.auth.user) {
-      await loadProfile();
-    }
-    renderAuthState();
-    renderAll();
-  });
-}
-
-async function loadProfile() {
-  if (!state.auth.client || !state.auth.user) return;
-  const { data, error } = await state.auth.client
-    .from("profiles")
-    .select("*")
-    .eq("id", state.auth.user.id)
-    .maybeSingle();
-  if (error) {
-    showToast("Kunde inte läsa profil.");
-    return;
-  }
-  state.auth.profile = data || null;
-  fillVoteFormFromProfile();
-  maybeShowProfileModal();
-}
-
-function fillVoteFormFromProfile() {
-  if (!state.auth.profile) return;
-  const form = document.getElementById("vote-form");
-  form.elements.firstName.value = state.auth.profile.first_name || "";
-  form.elements.lastName.value = state.auth.profile.last_name || "";
-  form.elements.email.value = state.auth.user?.email || state.auth.profile.email || "";
-  form.elements.phone.value = state.auth.profile.phone || "";
-  form.elements.marketingConsent.checked = Boolean(state.auth.profile.marketing_opt_in);
-}
-
-function maybeShowProfileModal() {
-  const modal = document.getElementById("profile-modal");
-  if (!state.auth.user) {
-    modal.hidden = true;
-    return;
-  }
-  const needsProfile = !isProfileComplete(state.auth.profile);
-  modal.hidden = !needsProfile;
-  const p = state.auth.profile || {};
-  document.getElementById("profile-first-name").value = p.first_name || "";
-  document.getElementById("profile-last-name").value = p.last_name || "";
-  document.getElementById("profile-birth-year").value = p.birth_year || "";
-  document.getElementById("profile-postal-code").value = p.postal_code || "";
-  document.getElementById("profile-phone").value = p.phone || "";
-  document.getElementById("profile-marketing").checked = Boolean(p.marketing_opt_in);
 }
 
 function renderAuthState() {
-  const banner = document.getElementById("auth-banner");
-  const bannerText = document.getElementById("auth-banner-text");
-  const openLogin = document.getElementById("open-login");
-  const logoutUser = document.getElementById("logout-user");
-  const voteForm = document.getElementById("vote-form");
-  const user = state.auth.user;
-  const profileReady = isProfileComplete(state.auth.profile);
-
-  if (!user) {
-    banner.hidden = false;
-    bannerText.textContent = "Logga in med e-post för att rösta.";
-    openLogin.hidden = false;
-    logoutUser.hidden = true;
-  } else if (!profileReady) {
-    banner.hidden = false;
-    bannerText.textContent = "Komplettera din profil för att rösta.";
-    openLogin.hidden = true;
-    logoutUser.hidden = false;
-  } else {
-    banner.hidden = true;
-    logoutUser.hidden = false;
-  }
-
-  voteForm.querySelectorAll("input, button").forEach((el) => {
-    if (el.id === "open-admin") return;
-    if (el.name === "terms") return;
-    if (!user || !profileReady) {
-      if (el.id !== "submit") el.setAttribute("aria-disabled", "true");
-    } else {
-      el.removeAttribute("aria-disabled");
-    }
-  });
-  updateSubmitState();
+  // Auth är borttaget i public vote-läget.
 }
 
 async function loadRemoteSettings() {
-  if (!state.auth.client || !state.auth.user) return;
+  if (!state.auth.client) return;
   const { data, error } = await state.auth.client
     .from("settings")
     .select("key,value")
@@ -624,114 +978,47 @@ async function loadRemoteSettings() {
 }
 
 async function submitVotes(payload) {
-  if (!state.auth.client || !state.auth.user) {
-    return { ok: false, message: "Du måste vara inloggad." };
+  if (!state.auth.client) {
+    return { ok: false, message: "Kunde inte ansluta till databasen." };
   }
 
-  const monthId = state.activeMonthId || toMonthId(new Date());
-  const rows = [
-    { user_id: state.auth.user.id, league_id: "shl", player_id: payload.shl, month_id: monthId },
-    { user_id: state.auth.user.id, league_id: "sdhl", player_id: payload.sdhl, month_id: monthId }
-  ];
+  const { data, error } = await state.auth.client.rpc("submit_vote_public", {
+    p_month_id: state.activeMonthId || toMonthId(new Date()),
+    p_email: payload.email.toLowerCase(),
+    p_first_name: payload.firstName,
+    p_last_name: payload.lastName,
+    p_phone: payload.phone || null,
+    p_marketing_opt_in: Boolean(payload.marketingConsent),
+    p_shl_player_id: payload.shl,
+    p_sdhl_player_id: payload.sdhl
+  });
 
-  const { error } = await state.auth.client.from("votes").insert(rows);
   if (error) {
-    if (error.code === "23505") {
-      return { ok: false, message: "Du har redan röstat i den här ligan denna månad." };
+    if (error.code === "42501") {
+      return { ok: false, message: "RLS blockerar röster utan inloggning. Lägg en EXECUTE-policy för RPC:n submit_vote_public." };
     }
-    return { ok: false, message: "Kunde inte spara röst just nu." };
+    return { ok: false, message: `Kunde inte spara röst: ${formatSupabaseError(error)}` };
   }
+
+  const response = Array.isArray(data) ? data[0] : data;
+  const status = response?.status || (typeof data === "string" ? data : null);
+  if (status === "already_voted") {
+    return { ok: false, message: "Du har redan röstat denna månad." };
+  }
+  if (status !== "ok") {
+    return { ok: false, message: "Oväntat svar från databasen vid röstning." };
+  }
+
   return { ok: true };
 }
 
 function setupAuthHandlers() {
-  document.getElementById("open-login").addEventListener("click", openLoginModal);
-  document.getElementById("close-login").addEventListener("click", closeLoginModal);
-  
-   // ✅ LÄGG GOOGLE HÄR
-  document.getElementById("login-google").addEventListener("click", async () => {
-    if (!state.auth.client) return;
-
-    const { error } = await state.auth.client.auth.signInWithOAuth({
-      provider: "google",
-      options: {
-        redirectTo: window.location.origin
-      }
-    });
-
-    if (error) showToast("Kunde inte logga in med Google.");
-  });
-
-  document.getElementById("email-form").addEventListener("submit", async (event) => {
-    event.preventDefault();
-    if (!state.auth.client) return;
-    const email = document.getElementById("login-email").value.trim();
-    const { error } = await state.auth.client.auth.signInWithOtp({ email });
-    if (error) {
-      showToast("Kunde inte skicka kod.");
-      return;
-    }
-    document.getElementById("otp-form").hidden = false;
-    showToast("Kod skickad till din e-post.");
-  });
-
-  document.getElementById("otp-form").addEventListener("submit", async (event) => {
-    event.preventDefault();
-    if (!state.auth.client) return;
-    const email = document.getElementById("login-email").value.trim();
-    const token = document.getElementById("otp-code").value.trim();
-    const { error } = await state.auth.client.auth.verifyOtp({
-      email,
-      token,
-      type: "email"
-    });
-    if (error) {
-      showToast("Fel eller utgången kod.");
-      return;
-    }
-    closeLoginModal();
-    showToast("Inloggning lyckades.");
-  });
-
-  document.getElementById("profile-form").addEventListener("submit", async (event) => {
-    event.preventDefault();
-    if (!state.auth.client || !state.auth.user) return;
-    const profile = {
-      id: state.auth.user.id,
-      email: state.auth.user.email || "",
-      first_name: document.getElementById("profile-first-name").value.trim(),
-      last_name: document.getElementById("profile-last-name").value.trim(),
-      birth_year: Number(document.getElementById("profile-birth-year").value),
-      postal_code: document.getElementById("profile-postal-code").value.trim(),
-      phone: document.getElementById("profile-phone").value.trim(),
-      marketing_opt_in: Boolean(document.getElementById("profile-marketing").checked)
-    };
-    const { error } = await state.auth.client.from("profiles").upsert(profile, { onConflict: "id" });
-    if (error) {
-      showToast("Kunde inte spara profil.");
-      return;
-    }
-    state.auth.profile = profile;
-    document.getElementById("profile-modal").hidden = true;
-    fillVoteFormFromProfile();
-    renderAuthState();
-    renderAll();
-    showToast("Profil sparad.");
-  });
-
-  document.getElementById("logout-user").addEventListener("click", async () => {
-    if (!state.auth.client) return;
-    await state.auth.client.auth.signOut();
-    sessionStorage.removeItem(RESULTS_UNLOCK_KEY);
-    state.auth.user = null;
-    state.auth.profile = null;
-    renderAuthState();
-    renderAll();
-  });
+  // Login är avstängt i detta läge.
 }
 
 function openAdmin() {
   const panel = document.querySelector(".admin");
+  if (!panel) return;
   if (sessionStorage.getItem(ADMIN_SESSION_KEY) === "true") {
     panel.hidden = false;
     renderAdmin();
@@ -808,8 +1095,16 @@ function fillPlayerForm(player) {
 }
 
 function setupAdminHandlers() {
-  document.getElementById("open-admin").addEventListener("click", openAdmin);
-  document.getElementById("logout-admin").addEventListener("click", logoutAdmin);
+  const openAdminButton = document.getElementById("open-admin");
+  const logoutAdminButton = document.getElementById("logout-admin");
+  if (openAdminButton) {
+    openAdminButton.addEventListener("click", openAdmin);
+    openAdminButton.onclick = openAdmin;
+  }
+  if (logoutAdminButton) {
+    logoutAdminButton.addEventListener("click", logoutAdmin);
+  }
+
 
   document.getElementById("save-sponsor").addEventListener("click", () => {
     state.data.sponsor.name = document.getElementById("sponsor-name").value.trim() || state.data.sponsor.name;
@@ -903,6 +1198,7 @@ function setupAdminHandlers() {
         state.data = JSON.parse(text);
         normalizePlayerDefaults();
         saveData();
+        markDataVersion("custom");
         renderAll();
         renderAdmin();
         showToast("Data importerad.");
@@ -924,7 +1220,7 @@ function renderAll() {
 }
 
 function renderVotingState() {
-  const closed = isVotingClosed() || !state.auth.user || !isProfileComplete(state.auth.profile);
+  const closed = isVotingClosed();
   const closedBanner = document.getElementById("voting-closed");
   closedBanner.hidden = !isVotingClosed();
   document.querySelectorAll(".card").forEach((card) => {
@@ -941,13 +1237,13 @@ async function renderResults() {
   const section = document.getElementById("results");
   const grid = document.getElementById("results-grid");
   const resultsUnlocked = sessionStorage.getItem(RESULTS_UNLOCK_KEY) === "true";
-  if (!resultsUnlocked || !state.auth.client || !state.auth.user) {
+  if (!resultsUnlocked || !state.auth.client) {
     section.hidden = true;
     grid.innerHTML = "";
     return;
   }
 
-  const { data, error } = await state.auth.client.rpc("get_results_for_month", {
+  const { data, error } = await state.auth.client.rpc("get_vote_results_public", {
     p_month_id: state.activeMonthId
   });
   if (error || !Array.isArray(data) || data.length === 0) {
@@ -957,15 +1253,17 @@ async function renderResults() {
   }
 
   const grouped = data.reduce((acc, row) => {
-    if (!acc[row.league_id]) acc[row.league_id] = [];
-    acc[row.league_id].push(row);
+    const leagueId = row.league_id || row.league;
+    if (!leagueId) return acc;
+    if (!acc[leagueId]) acc[leagueId] = [];
+    acc[leagueId].push(row);
     return acc;
   }, {});
 
   section.hidden = false;
   const blocks = state.data.leagues.map((league) => {
     const byPlayer = (grouped[league.id] || [])
-      .sort((a, b) => Number(b.percentage) - Number(a.percentage))
+      .sort((a, b) => Number(b.pct) - Number(a.pct))
       .slice(0, 3);
     if (byPlayer.length === 0) return "";
 
@@ -975,7 +1273,7 @@ async function renderResults() {
         ${byPlayer.map((row) => {
           const player = league.players.find((p) => p.id === row.player_id);
           const name = player?.name || row.player_id;
-          const pct = Math.round(Number(row.percentage) || 0);
+          const pct = Math.round(Number(row.pct) || 0);
           return `
           <div class="result-row">
             <div class="result-label">
@@ -1013,29 +1311,16 @@ function triggerConfetti() {
 }
 
 async function init() {
+  setupAuthHandlers();
+  setupAdminHandlers();
+
+  await hydrateDefaultDataFromFile();
   renderAll();
   attachCardListeners();
   handleForm();
-  setupAuthHandlers();
-  setupAdminHandlers();
   renderAdmin();
   await initSupabaseAuth();
 }
 
 void init();
 
-
-(async () => {
-  // vänta tills init() hunnit initiera Supabase
-  // (init() await:ar initSupabaseAuth() i slutet)
-  const client = state?.auth?.client;
-
-  if (!client) {
-    console.log("Supabase client saknas fortfarande. Kolla meta-taggarna.");
-    return;
-  }
-
-  const { data, error } = await client.auth.getUser();
-  console.log("USER:", data);
-  console.log("ERROR:", error);
-})();
