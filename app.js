@@ -1013,7 +1013,6 @@ async function initSupabaseAuth() {
 
 state.auth.client = window.supabase.createClient(url, anonKey);
   await loadRemoteSettings();
-  renderAll();
 }
 
 function renderAuthState() {
@@ -1278,6 +1277,7 @@ function setupAdminHandlers() {
 }
 
 function renderAll() {
+  console.log("renderAll called");
   renderSponsor();
   renderCards();
   renderVotingState();
@@ -1305,18 +1305,35 @@ async function renderResults() {
   const section = document.getElementById("results");
   const grid = document.getElementById("results-grid");
   const resultsUnlocked = sessionStorage.getItem(RESULTS_UNLOCK_KEY) === "true";
-  if (!resultsUnlocked || !state.auth.client) {
+  if (!resultsUnlocked) {
     section.hidden = true;
     grid.innerHTML = "";
     return;
   }
 
+  section.hidden = false;
+
+  if (!state.auth.client) {
+    grid.innerHTML = '<p class="results-fallback">Kunde inte hämta resultat just nu.</p>';
+    console.log("Results render done", { reason: "missing_client" });
+    return;
+  }
+
+  console.log("Results fetch start", { monthId: state.activeMonthId });
   const { data, error } = await state.auth.client.rpc("get_vote_results_public", {
     p_month_id: state.activeMonthId
   });
-  if (error || !Array.isArray(data) || data.length === 0) {
-    section.hidden = true;
-    grid.innerHTML = "";
+  console.log("Results fetch response", { data, error });
+
+  if (error || !Array.isArray(data)) {
+    grid.innerHTML = '<p class="results-fallback">Kunde inte hämta resultat just nu.</p>';
+    console.log("Results render done", { reason: "fetch_error" });
+    return;
+  }
+
+  if (data.length === 0) {
+    grid.innerHTML = '<p class="results-fallback">Inga röster registrerade än.</p>';
+    console.log("Results render done", { reason: "empty" });
     return;
   }
 
@@ -1328,20 +1345,30 @@ async function renderResults() {
     return acc;
   }, {});
 
-  section.hidden = false;
   const blocks = state.data.leagues.map((league) => {
     const byPlayer = (grouped[league.id] || [])
       .sort((a, b) => Number(b.pct) - Number(a.pct))
       .slice(0, 3);
-    if (byPlayer.length === 0) return "";
+    if (byPlayer.length === 0) {
+      return `
+        <article class="result-league">
+          <h3>${league.name} - Topp 3</h3>
+          <p class="results-fallback">Inga röster registrerade än.</p>
+        </article>
+      `;
+    }
 
     return `
       <article class="result-league">
         <h3>${league.name} - Topp 3</h3>
         ${byPlayer.map((row) => {
-          const player = league.players.find((p) => p.id === row.player_id);
-          const name = player?.name || row.player_id;
-          const pct = Math.round(Number(row.pct) || 0);
+          const playerId = row.player_id || row.player || row.id;
+          const player = league.players.find((p) => p.id === playerId);
+          const name = player?.name || playerId || "Okänd spelare";
+          const pctValue = Number(row.pct);
+          const pct = Number.isFinite(pctValue)
+            ? Math.max(0, Math.min(100, Math.round(pctValue)))
+            : 0;
           return `
           <div class="result-row">
             <div class="result-label">
@@ -1355,10 +1382,12 @@ async function renderResults() {
       </article>
     `;
   });
-  grid.innerHTML = blocks.filter(Boolean).join("");
+  grid.innerHTML = blocks.join("");
+  console.log("Results render done", { renderedLeagues: blocks.length });
 }
 
 function triggerConfetti() {
+
   if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
   if (typeof window.confetti !== "function") return;
 
@@ -1379,15 +1408,17 @@ function triggerConfetti() {
 }
 
 async function init() {
+  console.log("init start");
   setupAuthHandlers();
   setupAdminHandlers();
 
   await hydrateDefaultDataFromFile();
+  await initSupabaseAuth();
   renderAll();
   attachCardListeners();
   handleForm();
   renderAdmin();
-  await initSupabaseAuth();
+  console.log("init done");
 }
 
 void init();
