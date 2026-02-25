@@ -3,6 +3,7 @@ const EMAIL_KEY = "msp_email";
 const ADMIN_SESSION_KEY = "msp_admin";
 const RESULTS_UNLOCK_KEY = "msp_results_unlocked";
 const ADMIN_PASSWORD = "shl2026"; // change for production
+const DEFAULT_DATA_PATH = "data/defaultData.json";
 
 const defaultData = {
   "sponsor": {
@@ -524,6 +525,21 @@ function loadData() {
 
 function saveData() {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(state.data));
+}
+
+async function hydrateDefaultDataFromFile() {
+  if (localStorage.getItem(STORAGE_KEY)) return;
+  try {
+    const response = await fetch(DEFAULT_DATA_PATH, { cache: "no-store" });
+    if (!response.ok) return;
+    const data = await response.json();
+    if (!data || !Array.isArray(data.leagues) || data.leagues.length === 0) return;
+    state.data = data;
+    normalizePlayerDefaults();
+    saveData();
+  } catch (err) {
+    console.warn("Failed to load defaultData.json", err);
+  }
 }
 
 function normalizePlayerDefaults() {
@@ -1272,8 +1288,6 @@ async function init() {
   renderAll();
   attachCardListeners();
   handleForm();
-  setupAuthHandlers();
-  setupAdminHandlers();
   renderAdmin();
   await initSupabaseAuth();
 }
