@@ -97,7 +97,8 @@ const state = {
     client: null
   },
   activeMonthId: toMonthId(new Date()),
-  remoteVotingClosed: false
+  remoteVotingClosed: false,
+  submitInProgress: false
 };
 
 normalizePlayerDefaults();
@@ -241,6 +242,16 @@ function getSupabaseConfig() {
   const url = window.SUPABASE_URL || urlMeta || "";
   const anonKey = window.SUPABASE_ANON_KEY || keyMeta || "";
   return { url, anonKey };
+}
+
+
+function formatSupabaseError(error, fallback = "okänt fel") {
+  if (!error) return fallback;
+  const message = String(error.message || "").trim();
+  const details = String(error.details || "").trim();
+  const hint = String(error.hint || "").trim();
+  const code = String(error.code || "").trim();
+  return [message, details, hint, code && `(kod: ${code})`].filter(Boolean).join(" | ") || fallback;
 }
 
 
@@ -863,6 +874,7 @@ function triggerConfetti() {
 }
 
 async function init() {
+  hideAuthModals();
   renderAll();
   attachCardListeners();
   handleForm();
