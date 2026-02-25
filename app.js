@@ -226,6 +226,16 @@ function isProfileComplete(profile) {
   });
 }
 
+
+function formatSupabaseError(error, fallback = "okänt fel") {
+  if (!error) return fallback;
+  const message = String(error.message || "").trim();
+  const details = String(error.details || "").trim();
+  const hint = String(error.hint || "").trim();
+  const code = String(error.code || "").trim();
+  return [message, details, hint, code && `(kod: ${code})`].filter(Boolean).join(" | ") || fallback;
+}
+
 function isVotingClosed() {
   return Boolean(state.data.settings.votingClosed || state.remoteVotingClosed);
 }
@@ -629,6 +639,26 @@ async function submitVotes(payload) {
   }
 
   const monthId = state.activeMonthId || toMonthId(new Date());
+
+  const existingVote = await state.auth.client
+    .from("votes")
+    .select("league_id", { head: false })
+    .eq("user_id", state.auth.user.id)
+    .eq("month_id", monthId)
+    .limit(1);
+
+  if (existingVote.error) {
+    const reason = formatSupabaseError(existingVote.error);
+    return {
+      ok: false,
+      message: `Kunde inte kontrollera tidigare röst: ${reason}`
+    };
+  }
+
+  if (Array.isArray(existingVote.data) && existingVote.data.length > 0) {
+    return { ok: false, message: "Du har redan röstat den här månaden." };
+  }
+
   const rows = [
     { user_id: state.auth.user.id, league_id: "shl", player_id: payload.shl, month_id: monthId },
     { user_id: state.auth.user.id, league_id: "sdhl", player_id: payload.sdhl, month_id: monthId }
@@ -639,7 +669,10 @@ async function submitVotes(payload) {
     if (error.code === "23505") {
       return { ok: false, message: "Du har redan röstat i den här ligan denna månad." };
     }
-    return { ok: false, message: "Kunde inte spara röst just nu." };
+    if (error.code === "42501") {
+      return { ok: false, message: "Databasen nekar skrivning (RLS/policy). Kontrollera INSERT-policy för votes." };
+    }
+    return { ok: false, message: `Kunde inte spara röst: ${formatSupabaseError(error)}` };
   }
   return { ok: true };
 }
