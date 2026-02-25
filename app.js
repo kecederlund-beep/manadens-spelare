@@ -1015,9 +1015,17 @@ function setupAuthHandlers() {
 
 function openAdmin() {
   const panel = document.querySelector(".admin");
+  if (!panel) return;
   if (sessionStorage.getItem(ADMIN_SESSION_KEY) !== "true") {
     sessionStorage.setItem(ADMIN_SESSION_KEY, "true");
     showToast("Adminläge aktiverat.");
+  }
+  panel.hidden = false;
+  try {
+    renderAdmin();
+  } catch (err) {
+    console.error("Admin render failed", err);
+    showToast("Kunde inte öppna adminpanelen.");
   }
   panel.hidden = false;
   renderAdmin();
@@ -1082,8 +1090,16 @@ function fillPlayerForm(player) {
 }
 
 function setupAdminHandlers() {
-  document.getElementById("open-admin").addEventListener("click", openAdmin);
-  document.getElementById("logout-admin").addEventListener("click", logoutAdmin);
+  const openAdminButton = document.getElementById("open-admin");
+  const logoutAdminButton = document.getElementById("logout-admin");
+  if (openAdminButton) {
+    openAdminButton.addEventListener("click", openAdmin);
+    openAdminButton.onclick = openAdmin;
+  }
+  if (logoutAdminButton) {
+    logoutAdminButton.addEventListener("click", logoutAdmin);
+  }
+
 
   document.getElementById("save-sponsor").addEventListener("click", () => {
     state.data.sponsor.name = document.getElementById("sponsor-name").value.trim() || state.data.sponsor.name;
@@ -1292,6 +1308,13 @@ function triggerConfetti() {
 async function init() {
   setupAuthHandlers();
   setupAdminHandlers();
+
+  document.addEventListener("click", (event) => {
+    const adminTrigger = event.target.closest("#open-admin");
+    if (!adminTrigger) return;
+    openAdmin();
+  });
+
   await hydrateDefaultDataFromFile();
   renderAll();
   attachCardListeners();
