@@ -1327,43 +1327,89 @@ async function renderResults() {
     return;
   }
 
-  const rpcCandidates = [
-    { name: "get_vote_results", args: { p_month_id: state.activeMonthId } },
-    { name: "get_vote_results_public", args: {} }
-  ];
-  let data = null;
-  let error = null;
-  let rpcUsed = null;
+  const buildRowsFromVotes = (votesRows, monthId) => {
+    const filtered = (votesRows || []).filter((row) => row?.month_id === monthId);
+    const aggregateLeague = (leagueId, key) => {
+      const counts = new Map();
+      filtered.forEach((row) => {
+        const playerId = row?.[key];
+        if (!playerId) return;
+        counts.set(playerId, (counts.get(playerId) || 0) + 1);
+      });
+      const totalVotes = Array.from(counts.values()).reduce((sum, value) => sum + value, 0);
+      return Array.from(counts.entries()).map(([player_id, votes]) => ({
+        league_id: leagueId,
+        month_id: monthId,
+        player_id,
+        votes,
+        total_votes: totalVotes,
+        pct: totalVotes > 0 ? (votes * 100) / totalVotes : 0
+      }));
+    };
+    return [
+      ...aggregateLeague("shl", "shl_player_id"),
+      ...aggregateLeague("sdhl", "sdhl_player_id")
+    ];
+  };
 
-  for (const rpc of rpcCandidates) {
-    rpcUsed = rpc.name;
-    console.log("RPC starting", { rpc: rpc.name, args: rpc.args });
-    const response = await state.auth.client.rpc(rpc.name, rpc.args);
-    data = response.data;
-    error = response.error;
-    console.log("RPC data:", { rpc: rpc.name, data });
-    console.log("RPC error:", { rpc: rpc.name, error });
+  let rows = [];
+  let methodUsed = null;
 
-    if (!error) break;
-    if (error.code !== "404" && !String(error.message || "").includes("404")) break;
+  console.log("RPC starting", { method: "rpcA", rpc: "get_vote_results", args: {} });
+  let rpcA = await state.auth.client.rpc("get_vote_results");
+  console.log("RPC data:", { method: "rpcA", data: rpcA.data });
+  console.log("RPC error:", { method: "rpcA", error: rpcA.error });
+
+  if (!rpcA.error && Array.isArray(rpcA.data)) {
+    rows = rpcA.data;
+    methodUsed = "rpcA";
   }
 
-  if (error) {
-    grid.innerHTML = '<p class="results-fallback">Kunde inte hämta resultat just nu.</p>';
-    console.log("Results render done", { reason: "fetch_error", rpc: rpcUsed });
-    return;
+  if (!methodUsed) {
+    console.log("RPC starting", { method: "rpcB", rpc: "get_vote_results_public", args: {} });
+    const rpcB = await state.auth.client.rpc("get_vote_results_public");
+    console.log("RPC data:", { method: "rpcB", data: rpcB.data });
+    console.log("RPC error:", { method: "rpcB", error: rpcB.error });
+    if (!rpcB.error && Array.isArray(rpcB.data)) {
+      rows = rpcB.data;
+      methodUsed = "rpcB";
+    }
   }
 
-  const rows = Array.isArray(data) ? data : [];
-  console.log("results rows shape", { rpc: rpcUsed, isArray: Array.isArray(data), rowCount: rows.length });
+  if (!methodUsed) {
+    console.log("RPC starting", {
+      method: "jsFallback",
+      from: "votes_public",
+      monthId: state.activeMonthId
+    });
+    const fallback = await state.auth.client
+      .from("votes_public")
+      .select("month_id, shl_player_id, sdhl_player_id")
+      .eq("month_id", state.activeMonthId);
 
-  if (rows.length === 0) {
+    console.log("RPC data:", { method: "jsFallback", data: fallback.data });
+    console.log("RPC error:", { method: "jsFallback", error: fallback.error });
+
+    if (fallback.error) {
+      grid.innerHTML = '<p class="results-fallback">Kunde inte hämta resultat just nu.</p>';
+      console.log("Results render done", { reason: "fetch_error", methodUsed: "jsFallback", error: fallback.error });
+      return;
+    }
+
+    rows = buildRowsFromVotes(fallback.data, state.activeMonthId);
+    methodUsed = "jsFallback";
+  }
+
+  const normalizedRows = Array.isArray(rows) ? rows.filter((row) => (row.month_id || state.activeMonthId) === state.activeMonthId) : [];
+  console.log("results rows shape", { methodUsed, rowCount: normalizedRows.length });
+
+  if (normalizedRows.length === 0) {
     grid.innerHTML = '<p class="results-fallback">Inga röster ännu.</p>';
-    console.log("Results render done", { reason: "empty" });
+    console.log("Results render done", { reason: "empty", methodUsed });
     return;
   }
 
-  const grouped = rows.reduce((acc, row) => {
+  const grouped = normalizedRows.reduce((acc, row) => {
     const leagueId = row.league_id || row.league;
     if (!leagueId) return acc;
     if (!acc[leagueId]) acc[leagueId] = [];
@@ -1371,6 +1417,15 @@ async function renderResults() {
     return acc;
   }, {});
   console.log("results grouped", grouped);
+
+  const debugTop = Object.fromEntries(Object.entries(grouped).map(([leagueId, leagueRows]) => [
+    leagueId,
+    [...leagueRows]
+      .sort((a, b) => Number(b.votes ?? b.pct ?? 0) - Number(a.votes ?? a.pct ?? 0))
+      .slice(0, 3)
+      .map((row) => ({ player_id: row.player_id, votes: row.votes, pct: row.pct }))
+  ]));
+  console.log("top3 debug", { methodUsed, top3: debugTop });
 
   const blocks = state.data.leagues.map((league) => {
     const byPlayer = (grouped[league.id] || [])
@@ -1410,9 +1465,8 @@ async function renderResults() {
     `;
   });
 
-  console.log("results blocks", blocks);
   grid.innerHTML = blocks.join("");
-  console.log("Results render done", { renderedLeagues: blocks.length });
+  console.log("Results render done", { methodUsed, renderedLeagues: blocks.length });
 }
 function triggerConfetti() {
 
